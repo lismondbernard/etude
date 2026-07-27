@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  # Fast lane: the pure engine. No simulator, runs on every push/PR.
+  engine:
+    name: EtudeKit (swift test)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Show toolchain
+        run: swift --version
+      - name: Test
+        run: swift test
+
+  # Slow lane: app + UI tests on the simulator. Heavier; suitable for nightly if it
+  # becomes a bottleneck (schedule left commented until the app target is fleshed out).
+  app:
+    name: Etude app + UI tests (xcodebuild)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate Xcode project
+        working-directory: App/Etude
+        run: xcodegen generate
+      - name: Build & test
+        working-directory: App/Etude
+        run: |
+          xcodebuild test \
+            -scheme Etude \
+            -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=26.2' \
+            CODE_SIGNING_ALLOWED=NO

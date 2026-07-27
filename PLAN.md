@@ -1,0 +1,364 @@
+# Étude — a LilyPond→MIDI engine and SwiftUI app that teaches testing
+
+**Audience for this document:** Claude Code CLI. This is the build plan. Execute it
+phase by phase; each phase has explicit acceptance criteria. Do not skip the test
+infrastructure to get to features faster — the tests ARE the product as much as the
+app is.
+
+---
+
+## 1. What this project is
+
+An open-source iOS app (SwiftUI) + Swift package that:
+
+1. Parses a practical subset of **LilyPond** notation (`.ly` files, the plain-text
+   score format used by the Mutopia Project) into an internal score model.
+2. Validates the score against musical invariants.
+3. Emits standard **Type-1 MIDI** files (one track per voice/hand).
+4. Lets the user browse a bundled corpus of public-domain classical pieces, build
+   them on-device, play them (`AVMIDIPlayer`), adjust tempo, and export the `.mid`
+   via the share sheet (for GarageBand, games, DAWs).
+
+It is simultaneously a **teaching vehicle for software testing architecture**:
+unit testing (Swift Testing), property-based testing, golden-file/snapshot testing,
+regression testing from real historical bugs, invariant validation, and UI testing
+(XCUITest with page objects). It will eventually ship on the App Store with source
+publicly available.
+
+### Origin / prior art (context, not code to port verbatim)
+
+A working Python prototype already proved the pipeline on six pieces sourced from
+Mutopia/music21: Petzold **Minuet in G** (BWV Anh. 114, full AABB form with real
+left hand + ornaments), Bach **Prelude in C** (BWV 846), Bach **Air on the G
+String** (BWV 1068, flute+guitar edition), Vivaldi **Largo from "Winter"** (RV 297,
+five aligned string parts), Satie **Gymnopédie No. 1**, and Satie **Gnossienne
+No. 1**. Debussy **Clair de Lune** defeated the prototype (see §7, the Boss Fight)
+and is carried forward as a permanently visible known-issue acceptance test.
+
+The prototype's real bugs are catalogued in §6. Each becomes a named regression
+test in Swift. Do not lose them — they are the pedagogical crown jewels.
+
+---
+
+## 2. Repository layout
+
+```
+etude/
+├── PLAN.md                        # this file
+├── LICENSE                        # Apache-2.0 (see §9)
+├── README.md
+├── CONTRIBUTING.md                # PRs must include tests; explain test taxonomy
+├── Package.swift                  # SPM package: EtudeKit (engine, platform-agnostic)
+├── Sources/
+│   └── EtudeKit/
+│       ├── Tokenizer/             # .ly text → [Token]
+│       ├── Parser/                # [Token] → raw music events (relative pitches, durations, repeats, tuplets, graces, chords)
+│       ├── Resolver/              # relative→absolute octaves, repeat expansion, tie/grace timing
+│       ├── Model/                 # Score, Voice, NoteEvent, TimeSignature… (value types) + Validator
+│       └── MIDI/                  # Score → [UInt8] Type-1 SMF writer + minimal SMF reader (for round-trips)
+├── Tests/
+│   └── EtudeKitTests/
+│       ├── Unit/                  # table-driven tokenizer/parser tests
+│       ├── Property/              # generator-based law tests
+│       ├── Regression/            # BUG-001…BUG-006, one file each, story in doc comment
+│       ├── Golden/                # byte-compare emitted MIDI vs known-good fixtures
+│       └── Acceptance/            # full-piece corpus builds; ClairDeLune via withKnownIssue
+├── Corpus/                        # vendored Mutopia .ly sources + per-file LICENSE notes
+│   ├── minuet-in-g.ly
+│   ├── prelude-in-c.ly            # (or note: sourced via music21 export — see §5)
+│   ├── air-on-the-g-string.ly
+│   ├── winter-largo/              # multi-part: solo, vln1, vln2, viola, cello
+│   ├── gymnopedie-1.ly
+│   ├── gnossienne-1.ly
+│   └── clair-de-lune.ly           # the boss fight
+├── App/
+│   └── Etude/                     # Xcode project, SwiftUI app target + XCUITest target
+│       ├── EtudeApp.swift
+│       ├── Features/
+│       │   ├── Library/           # piece list (bundled corpus)
+│       │   ├── PieceDetail/       # build, play, tempo slider, track list, export
+│       │   └── Diagnostics/       # shows validator output — the app UI teaches the invariants too
+│       └── EtudeUITests/
+│           ├── PageObjects/       # LibraryScreen, PieceDetailScreen…
+│           └── Flows/             # browse→build→play→export happy paths + failure surfacing
+└── docs/
+    ├── adr/                       # Architecture Decision Records (numbered)
+    │   ├── 0001-clamp-vs-throw.md         # defensive clamping hid BUG-004; why validators throw instead
+    │   ├── 0002-value-types-for-score.md
+    │   ├── 0003-known-issue-not-skip.md   # why Clair de Lune is withKnownIssue, not disabled
+    │   └── 0004-license-choice.md
+    └── lessons/                   # one write-up per bug: symptom → root cause → the test that now guards it
+```
+
+**Two-target philosophy:** `EtudeKit` is a pure SPM package with **zero** UIKit/
+SwiftUI imports — fully testable on any platform, fast unit tests, no simulator
+needed. The app is a thin SwiftUI shell over it. This separation is itself Lesson 1
+in designing for testability.
+
+---
+
+## 3. Toolchain and testing stack
+
+- **Swift 6 / Xcode 16+**, iOS 17+ deployment target.
+- **Swift Testing** (`import Testing`, `@Test`, `#expect`, `#require`) for all
+  EtudeKit tests. Use **parameterized tests** for token/parse tables, **tags**
+  (`.regression`, `.golden`, `.property`, `.acceptance`) for suite slicing, and
+  **`withKnownIssue`** for Clair de Lune.
+- **XCTest/XCUITest** for the UI test target (UI testing is XCTest-only). Use
+  accessibility identifiers on every interactive element; **Page Object pattern**
+  in `PageObjects/`.
+- **Property-based tests:** hand-roll small generators (seeded
+  `RandomNumberGenerator`, shrink by halving) inside Swift Testing rather than
+  taking a dependency — building a 60-line generator is itself a lesson. Document
+  this choice in an ADR.
+- **Golden files:** known-good `.mid` fixtures live in test resources
+  (`Bundle.module`). Compare bytes; on mismatch, print a structured event-level
+  diff (decode both with the SMF reader) so failures are diagnosable, not just red.
+- **CI:** GitHub Actions, `macos-15` runner: `swift test` for EtudeKit (fast lane)
+  and `xcodebuild test` for app + UI tests (slow lane, can be nightly).
+
+---
+
+## 4. The engine, layer by layer (with its testing lesson)
+
+### 4.1 Tokenizer — `.ly` text → `[Token]`
+Handles: note names (Dutch default `c d e f g a b` + `is`/`es`; **English mode**
+`\language "english"` with `cs`/`df` style used by the Gnossienne source), octave
+marks `'`/`,`, durations (`1 2 4 8 16` + dots), chords `<c e g>`, chord-repeat `q`,
+rests `r`/`s`, ties `~`, braces, `<< … >>` parallel markers, commands
+(`\relative`, `\repeat`, `\times`/`\tuplet`, `\grace`, `\acciaccatura`, `\key`,
+`\time`, `\tempo`, `\crossStaff`, `\ottava`), comments `%`, strings.
+**Critical:** chords contain spaces — tokenize structurally, never by whitespace
+split (BUG-001).
+*Lessons:* table-driven parameterized tests; regression tests; fuzz with random
+byte strings — tokenizer must never crash, only throw typed errors.
+
+### 4.2 Parser — `[Token]` → raw event tree
+Produces a tree of notes/chords/rests with **relative** pitch context still
+unresolved; captures repeat blocks, tuplet groupings (`\times 2/3 { … }` scales
+durations), grace groups (steal time from the following note; acciaccatura ≈ very
+short), and parallel `<<…>>` groups. `\crossStaff { … }` braces are grouping
+no-ops, **not** parallel separators (BUG-003).
+*Lessons:* recursive-descent structure; typed `ParseError` with source location;
+snapshot tests of the event tree (Codable → JSON, compare to fixture).
+
+### 4.3 Resolver — event tree → absolute timed events
+- `\relative` octave resolution: each note is placed within a fourth of the
+  previous note, then `'`/`,` adjust. Chords: the **first chord note** relates to
+  the previous context; subsequent chord notes relate within the chord; context
+  after the chord continues from the first note (LilyPond semantics).
+- `\repeat volta/unfold n { … }`: resolve the body **once**, then copy the
+  resolved events — never re-thread the relative context through repetitions
+  (BUG-002).
+- Per-section `\relative` anchors: a multi-section piece re-anchors at each
+  section head (the Gnossienne and Clair sources use this pattern).
+*Lessons:* property-based laws —
+  (a) resolve∘transpose == transpose∘resolve on pitch classes;
+  (b) `unfold n` yields exactly n× the events of the body, pairwise identical;
+  (c) octave marks are inverses: `'` then `,` restores pitch.
+
+### 4.4 Model + Validator — `Score` value types, invariants as first-class code
+`Score { title, tempo, timeSignature, voices: [Voice] }`,
+`Voice { name, events: [NoteEvent] }`,
+`NoteEvent { pitch: MIDINote(UInt8 0…127), startTick, durationTicks, velocity }`.
+The **Validator** runs these invariants (each an independently unit-tested rule)
+and throws structured findings rather than clamping (ADR-0001):
+1. **Voice alignment** — all simultaneous voices in each section sum to equal
+   tick length (this is exactly the check that exposed Clair de Lune's
+   91 vs 46 vs 57 vs 54-beat mismatch).
+2. **Register sanity** — per-track min/max pitch within a plausible instrument
+   range; octave-0 or octave-8 artifacts are parser bugs, not music (BUG-004/006).
+3. **Opening-phrase fingerprint** — corpus pieces carry expected first-notes
+   metadata (e.g. Gnossienne melody opens C–E♭–D–C–B; Gymnopédie opens
+   F♯5–A5–G5–F♯5) asserted in acceptance tests.
+4. **Bar arithmetic** — events in each bar sum to the time signature.
+*Lessons:* invariants > defensive code; validators turn silent wrongness into loud
+failure; designing errors as data (findings list) not just throws.
+
+### 4.5 MIDI writer (+ minimal reader) — `Score` → `[UInt8]`
+Standard MIDI File Type 1: `MThd` (format 1, ntrks, division e.g. 480 tpq), one
+tempo/meta track + one `MTrk` per voice, running status optional (keep it simple:
+don't use it, and say why in a comment), every track ends with End-of-Track. A
+minimal reader parses SMF back to events for round-trip tests.
+*Lessons:* golden-file byte comparison against the six known-good fixtures;
+round-trip property (write→read == identity on events); structural checks (header
+magic, track terminators, EOF) as cheap smoke tests.
+
+### 4.6 Corpus acceptance suite
+For each corpus piece: parse → resolve → validate → emit → assert the structural
+fingerprint (bar count, voice count, opening pitches, total duration within
+tolerance, byte-equality to golden fixture). Clair de Lune runs the same pipeline
+inside `withKnownIssue("parallelMusic + dense polyphony — see issue #1")`.
+*Lessons:* the test pyramid made concrete; fixtures you don't control; honest
+failure as a feature.
+
+---
+
+## 5. Corpus notes (licensing + provenance)
+
+All **compositions** are public domain. The vendored **typesettings**:
+- Mutopia sources for Minuet in G, Air, Gymnopédie 1, Gnossienne 1, Clair de Lune:
+  public domain (verify each file's header and record it in `Corpus/LICENSES.md`).
+- Vivaldi Winter typesetting is **CC-BY-SA** — fine to vendor with attribution;
+  note that redistribution of the `.ly` itself carries that license (the emitted
+  MIDI of public-domain notes does not).
+- Bach Prelude in C: the prototype exported it from the music21 corpus rather than
+  a Mutopia `.ly`. Either find/typeset a simple `.ly` for it or keep it as a
+  golden-MIDI-only piece initially; note the decision in `Corpus/LICENSES.md`.
+- Air on the G String: this edition's separate bass part has a known 1-bar repeat
+  mismatch vs the melody — use flute melody + guitar-upper accompaniment only
+  (document this quirk; it's a nice "real data is messy" teaching moment).
+
+Golden `.mid` fixtures: if the original prototype files are provided, use them; if
+not, the first byte-stable output of the finished pipeline becomes the golden
+baseline (record the commit hash in each fixture's sidecar note).
+
+---
+
+## 6. The regression catalog (build one named test per bug)
+
+Each gets `Tests/EtudeKitTests/Regression/BUG00N_*.swift` with the story in a doc
+comment: symptom → root cause → the guard now in place.
+
+- **BUG-001 — Chord tokens split on whitespace.** `<c e g>` was whitespace-split
+  into garbage. Guard: tokenizer treats `<…>` structurally; test includes chords
+  with every duration/ornament suffix.
+- **BUG-002 — Relative octave threaded through `\repeat unfold`.** Bass spiraled
+  F2→F1→F0 across repetitions. Guard: resolve body once, copy events; property
+  test (unfold ×n == n identical copies).
+- **BUG-003 — `\crossStaff { }` braces treated as parallel separators.** Grouping
+  braces outside `<<…>>` corrupted voice structure. Guard: brace semantics are
+  context-dependent; targeted parser tests.
+- **BUG-004 — Sub-audible octave-0 bass in Gymnopédie ending.** `<<…>>` octave
+  references drifted; prototype **clamped** the register, which hid the real bug.
+  Guard: Validator *throws* on register violations (ADR-0001); resolver test on
+  the exact ending figure.
+- **BUG-005 — Polyphony wrapper glued to a pitch broke chord parsing**
+  (Gnossienne: `<<` adjacent to a note token). Guard: tokenizer separates
+  structural markers from pitch tokens; test the exact source fragment.
+- **BUG-006 — Voice-length mismatch only caught at validation** (Clair de Lune,
+  91/46/57/54 beats in section 1). Not fixed — *institutionalized*: the alignment
+  invariant exists so this class of failure is always loud. The acceptance test
+  documents it via `withKnownIssue`.
+
+---
+
+## 7. The Boss Fight — Clair de Lune (standing issue #1)
+
+Debussy's score (Mutopia `.ly`) combines `\parallelMusic` (round-robin bar
+distribution across voices), two independent voices per staff, cross-staff
+writing, nested tuplets, and irregular spacing. The prototype correctly expanded
+`\parallelMusic` to 72 bars/voice but could not time the dense polyphony. Carry
+this forward as:
+- `Corpus/clair-de-lune.ly` vendored,
+- a `ParallelMusicExpander` in the Resolver (port the round-robin logic — it
+  worked),
+- an acceptance test under `withKnownIssue`,
+- GitHub issue #1 describing exactly where it breaks, inviting contributors.
+Success criteria if ever solved: all four voices equal length per section, opening
+melody fingerprint matches, validator passes. **Never ship a subtly wrong
+version** — a correct excerpt beats an incorrect whole (this is project policy,
+stated in README).
+
+---
+
+## 8. The app (SwiftUI) and UI-testing curriculum
+
+**Screens (MVP):**
+1. **Library** — list of corpus pieces (title, composer, duration, license badge).
+2. **Piece Detail** — Build button → progress → track list with per-track
+   instrument names; Play/Pause (`AVMIDIPlayer`); tempo slider (rebuild MIDI at new
+   BPM or set tempo meta); Export via `ShareLink`/share sheet.
+3. **Diagnostics** — after a build, show the Validator's findings (all green for
+   the six; Clair de Lune intentionally shows its alignment failure — the app is
+   honest in the UI the same way the tests are).
+
+**Architecture:** thin observable view models over `EtudeKit`; builds run off the
+main actor; every interactive element gets a stable `accessibilityIdentifier`
+(e.g. `library.row.gymnopedie-1`, `detail.button.build`, `detail.slider.tempo`).
+
+**UI-test curriculum (XCUITest):**
+- Page objects (`LibraryScreen`, `PieceDetailScreen`) wrapping queries + waits —
+  no raw `app.buttons[...]` in test bodies.
+- Happy path: launch → tap Gymnopédie → Build → wait for Play enabled → Play →
+  export sheet appears.
+- Failure surfacing: open Clair de Lune → Build → Diagnostics shows alignment
+  findings (testing that errors are *presented*, not just thrown).
+- Launch-argument seams (`-uiTesting`) to skip audio hardware where needed and to
+  make builds deterministic/fast in tests.
+- Flake discipline: explicit expectations/waits, no `sleep`.
+
+---
+
+## 9. Open source + App Store
+
+- **License: Apache-2.0** (explicit patent grant; permissive; compatible with App
+  Store distribution — GPL is not). Record reasoning in ADR-0004.
+- The app's name/branding is the practical protection against clone submissions;
+  the README states the code is open but the name/icon are not to be used for
+  derivative store submissions.
+- Corpus licensing per §5; app credits screen lists Mutopia attributions.
+
+---
+
+## 10. Build phases for Claude Code (execute in order)
+
+### Phase 0 — Scaffold (this session)
+SPM package + Xcode workspace per §2; CI workflow; LICENSE, README (project
+pitch + the "no subtly wrong music" policy), CONTRIBUTING (test taxonomy, PRs
+require tests); empty ADR/lessons templates; vendor whatever corpus files are
+available (fetch from Mutopia if network allows, else stub with TODO+URLs).
+**Accept:** `swift test` runs (zero tests, green); app target builds and shows an
+empty Library.
+
+### Phase 1 — Tokenizer, test-first
+Token model + lexer per §4.1. Write the parameterized token tables and BUG-001/
+BUG-005 regression tests **before** the implementation. Fuzz smoke test.
+**Accept:** tokenizes the Gymnopédie and Gnossienne sources end-to-end without
+error; all Unit+Regression tests green.
+
+### Phase 2 — Parser + Resolver
+Event tree, then relative-octave resolution, repeats, tuplets, graces per
+§4.2–4.3. BUG-002/BUG-003 regression tests; the three resolver property tests.
+**Accept:** Gymnopédie and Gnossienne resolve to correct opening fingerprints and
+bar counts (78 and 82 bars).
+
+### Phase 3 — Model, Validator, MIDI writer
+§4.4–4.5 including the SMF reader and round-trip property. BUG-004 as a
+validator-throws test. Golden fixtures established.
+**Accept:** all six pieces build, validate, byte-stable across two consecutive
+runs; golden tests green.
+
+### Phase 4 — Acceptance suite + Boss Fight
+Corpus acceptance tests with fingerprints; ParallelMusicExpander port; Clair de
+Lune under `withKnownIssue`; write `docs/lessons/` entries for all six bugs.
+**Accept:** suite green with exactly one known issue recorded.
+
+### Phase 5 — App MVP + UI tests
+Screens per §8, page objects, the three UI test flows, accessibility identifiers
+throughout.
+**Accept:** UI tests green on simulator; export produces a `.mid` that GarageBand
+opens (manual check).
+
+### Phase 6 — Polish for store + course
+App icon, credits/licenses screen, README course map ("which test to read first"),
+tag `v0.1.0`.
+
+---
+
+## Appendix A — Validation checklist (run for every piece, always)
+1. Voice alignment: simultaneous voices equal tick-length per section.
+2. Opening pitches match the known tune.
+3. Per-track register sane (no octave 0/8 artifacts).
+4. SMF structure: `MThd`, every `MTrk` terminated, clean EOF.
+
+## Appendix B — Known piece fingerprints (for acceptance tests)
+| Piece | Voices/Tracks | Bars | Opening melody | Notes |
+|---|---|---|---|---|
+| Minuet in G (Petzold, BWV Anh. 114) | 2 (melody, bass) | AABB w/ repeats (16+16) | D5 G4 A4 B4 C5 | 4 mordents, 1 prall, 1 grace; ~126 BPM |
+| Bach Prelude in C (BWV 846) | 2 | 34 (no Schwencke bar) | broken C-major figure | ~72 BPM |
+| Air on the G String (BWV 1068) | 2 (flute, guitar-upper) | 18 | long D5 | 2 acciaccaturas; bass part omitted (edition mismatch) |
+| Winter Largo (RV 297) | 5→3 tracks | 18 | E♭-major solo (D♯/A♯ enharmonic in source) | ~52 BPM, pizzicato accompaniment |
+| Gymnopédie No. 1 | 2 (melody, acc+bass) | 78 | F♯5 A5 G5 F♯5 | Gmaj7/Dmaj7 alternation; "Lent" |
+| Gnossienne No. 1 | 3 | 82 | C5 E♭5 D5 C5 B4 | English note names, bare `\relative`, `q` chord-repeat, low-F pedal |
+| Clair de Lune | 4 voices | 72 | — | KNOWN ISSUE #1, `withKnownIssue` |

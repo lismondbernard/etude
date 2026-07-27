@@ -1,0 +1,61 @@
+name: Etude
+options:
+  bundleIdPrefix: com.silentspice
+  deploymentTarget:
+    iOS: "17.0"
+  xcodeVersion: "16.0"
+  generateEmptyDirectories: true
+
+# EtudeKit is the pure engine package at the repo root (two levels up). The app is a
+# thin SwiftUI shell over it (PLAN.md §2, ADR-0002).
+packages:
+  EtudeKit:
+    path: ../..
+
+targets:
+  Etude:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources
+    dependencies:
+      - package: EtudeKit
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.silentspice.etude
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        SWIFT_VERSION: "6.0"
+        DEVELOPMENT_TEAM: QA8F432V3V
+        CODE_SIGN_STYLE: Automatic
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_CFBundleDisplayName: "Étude"
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
+        INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
+        SWIFT_STRICT_CONCURRENCY: complete
+        GENERATE_INFOPLIST_FILE: YES
+
+  EtudeUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: EtudeUITests
+    dependencies:
+      - target: Etude
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.silentspice.etude.uitests
+        SWIFT_VERSION: "6.0"
+        DEVELOPMENT_TEAM: QA8F432V3V
+        CODE_SIGN_STYLE: Automatic
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  Etude:
+    build:
+      targets:
+        Etude: all
+        EtudeUITests: [test]
+    test:
+      targets:
+        - EtudeUITests
