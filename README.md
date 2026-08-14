@@ -64,6 +64,13 @@ public domain; vendored typesettings carry their own licenses — see
 3. `Tests/EtudeKitTests/Regression/` + `docs/lessons/` — real bugs, and the tests that
    now guard against them.
 
+## How this is built
+
+Étude is built test-first with heavy use of [Claude Code](https://claude.com/claude-code)
+as the implementation tool. The method (§0 of [`PLAN.md`](PLAN.md)), the architecture, the
+bug catalog, and every design decision recorded in the ADRs are the author's; the commit
+discipline the history teaches is enforced on human and AI contributions alike.
+
 ## License
 
 Code is [Apache-2.0](LICENSE) (permissive, App-Store-compatible, explicit patent grant —
