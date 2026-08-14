@@ -11,16 +11,14 @@ defines the working method that binds every phase — read it before §10.
 ## 0. Method — how this gets built
 
 The discipline below is adapted from the **Essential Developer** curriculum the
-author completed years ago (its public *EssentialFeed* case-study repo shows how
-that codebase evolved commit-by-commit). Étude borrows the *method*, not the material —
-these rules are reshaped for a parser/emitter engine rather than a networked feed
-app, and they are project law for every phase in §10.
+author completed years ago. Étude borrows the *method*, not the material — these
+rules are reshaped for a parser/emitter engine, and they are project law for
+every phase in §10.
 
 ### 0.1 The git history is a deliverable
 
-EssentialFeed's history reads as a TDD transcript: 194 commits, nearly every one a
-single red→green→refactor step with a behavior-named subject (*"Delivers
-invalidData on non 200 HTTP responses"*). Étude commits the same way:
+The git history should read as a TDD transcript: nearly every commit a single
+red→green→refactor step with a behavior-named subject. Étude commits accordingly:
 
 - **One behavior per commit** during engine phases. Write the failing test, make
   it pass minimally, refactor, commit. Never batch multiple behaviors.
@@ -36,21 +34,19 @@ invalidData on non 200 HTTP responses"*). Étude commits the same way:
 
 ### 0.2 Behavior-first naming
 
-Test files are named for **use cases/behaviors, not types** (EssentialFeed has
-`LoadFeedFromRemoteUseCaseTests`, `CacheFeedUseCaseTests` — not `RemoteFeedLoaderTests`).
-Étude's equivalents: `TokenizeChordsTests`, `ExpandRepeatsTests`,
+Test files are named for **use cases/behaviors, not types**:
+`TokenizeChordsTests`, `ExpandRepeatsTests`,
 `ResolveRelativeOctavesTests` — not `TokenizerTests` grab-bags. Swift Testing
 `@Test` display names state the behavior in domain language: *"delivers a typed
 error on an unterminated chord"*.
 
 ### 0.3 Abstractions before implementations
 
-EssentialFeed designed the `HTTPClient` protocol from the consumer's side — the
-real `URLSessionHTTPClient` appeared only after the mapping logic was fully proven
-against a test spy. Étude does the same at its seams:
+A concrete implementation appears only after the logic that consumes it is fully
+proven against a test double. Étude applies this at its seams:
 
 - Design each seam as a **protocol, from the consumer's side**, often extracted
-  from the test double that drove it (the FeedStore-from-spy move).
+  from the test double that drove it.
 - Étude's seams: **`PieceBuilding`** (app → engine: the view models never see
   pipeline internals), **`SMFWriting`** (score → bytes), **`CorpusProviding`**
   (where pieces come from — bundled today, downloadable someday).
@@ -58,9 +54,9 @@ against a test spy. Étude does the same at its seams:
 
 ### 0.4 Boundary models stay at boundaries
 
-EssentialFeed keeps `RemoteFeedItem` (API shape) and `LocalFeedImage` (cache
-shape) out of the domain, mapping to `FeedImage` at the seams. Étude's pipeline
-has the same rule, one layer at a time:
+External-format shapes never travel into the domain — mapping happens at the
+seams, and each layer owns its own model. Étude's pipeline applies the rule one
+layer at a time:
 
 - The **parse tree is LilyPond-shaped** (relative pitches, unexpanded repeats,
   `\times` fractions) and never travels past the Resolver.
@@ -73,10 +69,10 @@ has the same rule, one layer at a time:
 
 ### 0.5 Behavioral spec suites make swaps safe
 
-Before EssentialFeed swapped `CodableFeedStore` for `CoreDataFeedStore`, it wrote
-`FeedStoreSpecs` — one reusable behavioral contract both implementations had to
-pass — then deleted the old store in a single commit once CoreData was proven.
-Étude stages the same lesson deliberately:
+Before swapping one implementation of a seam for another, write one reusable
+behavioral contract both implementations must pass — then delete the old one in
+a single commit once the replacement is proven. Étude stages this lesson
+deliberately:
 
 - When a seam will ever have two implementations, write a **reusable spec suite**
   first (a protocol listing the required behaviors + shared assertion helpers).
@@ -87,9 +83,8 @@ pass — then deleted the old store in a single commit once CoreData was proven.
 
 ### 0.6 Shared test-helper discipline
 
-EssentialFeed's tests share `makeSUT()` factories, `expect(_:toCompleteWith:)`
-assertion helpers, sample-data builders, and `trackForMemoryLeaks` in every
-factory. Étude adopts the same shape:
+Every suite shares the same helper shape — factories, builders, and assertion
+helpers that keep test bodies down to their intent:
 
 - **`makeSUT()`** per suite; test bodies stay three lines of intent.
 - **Domain sample builders** (`anyNote()`, `gymnopedieOpening()`,
@@ -99,22 +94,19 @@ factory. Étude adopts the same shape:
 - **Memory-leak tracking** where reference types live: EtudeKit is value types
   (§4.4, ADR-0002), so the engine largely can't leak — but the app's view models
   and the `AVMIDIPlayer` wrapper can. App-layer unit tests use a
-  `trackForMemoryLeaks` teardown helper, same as EssentialFeed.
+  `trackForMemoryLeaks` teardown helper.
 
 ### 0.7 Ubiquitous language
 
-EssentialFeed renamed its core model Item→Image mid-project because "Image" is
-*"a domain term used by domain experts in the specs"* — and committed the rename
-as its own refactor. Étude's domain language is the musician's: Voice, bar,
-anacrusis, tick, grace note. When a name turns out wrong, rename it the moment the
-domain says so, as a dedicated commit.
+The code speaks the language domain experts use. Étude's domain language is the
+musician's: Voice, bar, anacrusis, tick, grace note. When a name turns out wrong,
+rename it the moment the domain says so, as a dedicated refactor commit.
 
 ### 0.8 Focused sweeps, not dribbled changes
 
-EssentialFeed modernized every hand-rolled result enum to `Swift.Result` in one
-focused single-day sweep — not scattered across feature commits. Any cross-cutting
-idiom change in Étude (error-type reshaping, a Swift language-mode migration)
-gets the same treatment: one dedicated, single-purpose sweep with its own commits.
+Cross-cutting idiom changes in Étude (error-type reshaping, a Swift
+language-mode migration) are never scattered across feature commits — each gets
+one dedicated, single-purpose sweep with its own commits.
 
 ### 0.9 Architecture principles: SOLID and pragmatic MVVM
 
@@ -127,7 +119,7 @@ gets the same treatment: one dedicated, single-purpose sweep with its own commit
 - **L**iskov substitution → `SMFWriterSpecs` (§0.5) is LSP made executable: any
   writer passing the behavioral contract is substitutable.
 - **I**nterface segregation → three small seams, never one god `Engine` protocol.
-- **D**ependency inversion → §0.3 wholesale; the `HTTPClient` lesson.
+- **D**ependency inversion → §0.3 wholesale.
 
 The app layer (§8) follows **MVVM, pragmatically**: a view model exists where
 there is presentation logic or async state worth testing — not one per screen by
@@ -259,7 +251,7 @@ in designing for testability.
   add a `trackForMemoryLeaks` teardown helper.
 - **CI:** GitHub Actions, `macos-15` runner: `swift test` for EtudeKit (fast lane)
   and `xcodebuild test` for app + UI tests (slow lane, can be nightly). The lane
-  split is the EssentialFeed lesson in target design: the engine tests run on
+  split is a lesson in target design: the engine tests run on
   macOS with no simulator *because* EtudeKit has zero UI imports — testability is
   an architecture property, not a tooling trick.
 
