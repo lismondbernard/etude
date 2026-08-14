@@ -15,6 +15,7 @@
 public enum TokenizerError: Error, Equatable, Sendable {
     case unexpectedCharacter(Character, line: Int, column: Int)
     case unterminatedString(line: Int, column: Int)
+    case unterminatedChord(line: Int, column: Int)
 }
 
 /// A pitch as it appears lexically — one glued word like `fis'4.`, kept whole
@@ -100,6 +101,7 @@ public struct Tokenizer: Sendable {
         let chars = Array(source)
         var i = 0
         var inChord = false
+        var chordOpening = 0
         var language = NoteLanguage.dutch
         while i < chars.count {
             let c = chars[i]
@@ -162,6 +164,7 @@ public struct Tokenizer: Sendable {
                 } else {
                     tokens.append(.chordStart)
                     inChord = true
+                    chordOpening = i
                     i += 1
                 }
                 continue
@@ -228,6 +231,10 @@ public struct Tokenizer: Sendable {
             }
             let (line, column) = location(of: i, in: chars)
             throw TokenizerError.unexpectedCharacter(c, line: line, column: column)
+        }
+        if inChord {
+            let (line, column) = location(of: chordOpening, in: chars)
+            throw TokenizerError.unterminatedChord(line: line, column: column)
         }
         return tokens
     }

@@ -19,6 +19,14 @@ struct TokenizeErrorsTests {
         }
     }
 
+    @Test("delivers a typed error on an unterminated chord", .tags(.unit))
+    func unterminatedChord() throws {
+        let sut = makeSUT()
+        #expect(throws: TokenizerError.unterminatedChord(line: 1, column: 4)) {
+            try sut.tokenize("c4 <e g b")
+        }
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> Tokenizer { Tokenizer() }
