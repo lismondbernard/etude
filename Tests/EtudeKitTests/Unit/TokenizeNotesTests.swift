@@ -18,6 +18,22 @@ struct TokenizeNotesTests {
         #expect(try sut.tokenize("  \n\t  \n") == [])
     }
 
+    @Test("tokenizes a bare Dutch note name", .tags(.unit), arguments: ["c", "d", "e", "f", "g", "a", "b"])
+    func bareDutchNoteName(name: String) throws {
+        let sut = makeSUT()
+        #expect(try sut.tokenize(name) == [.note(NoteToken(name: name))])
+    }
+
+    @Test("tokenizes a sequence of notes separated by whitespace", .tags(.unit))
+    func noteSequence() throws {
+        let sut = makeSUT()
+        #expect(try sut.tokenize("c d\n e") == [
+            .note(NoteToken(name: "c")),
+            .note(NoteToken(name: "d")),
+            .note(NoteToken(name: "e")),
+        ])
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> Tokenizer { Tokenizer() }

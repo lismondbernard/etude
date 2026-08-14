@@ -14,8 +14,20 @@
 /// A lexical error, carrying enough location to be diagnosable.
 public enum TokenizerError: Error, Equatable, Sendable {}
 
+/// A pitch as it appears lexically — one glued word like `fis'4.`, kept whole
+/// because splitting it would lose the guarantee that its parts were adjacent.
+public struct NoteToken: Equatable, Sendable {
+    public let name: String
+
+    public init(name: String) {
+        self.name = name
+    }
+}
+
 /// One lexical unit of LilyPond source.
-public enum Token: Equatable, Sendable {}
+public enum Token: Equatable, Sendable {
+    case note(NoteToken)
+}
 
 /// Scans LilyPond source text into a flat token stream. Stateless between runs;
 /// all per-run state (note-name language, open-chord tracking) lives inside
@@ -24,6 +36,26 @@ public struct Tokenizer: Sendable {
     public init() {}
 
     public func tokenize(_ source: String) throws(TokenizerError) -> [Token] {
-        []
+        var tokens: [Token] = []
+        let chars = Array(source)
+        var i = 0
+        while i < chars.count {
+            let c = chars[i]
+            if c.isWhitespace {
+                i += 1
+                continue
+            }
+            if c.isLetter {
+                var word = ""
+                while i < chars.count, chars[i].isLetter {
+                    word.append(chars[i])
+                    i += 1
+                }
+                tokens.append(.note(NoteToken(name: word)))
+                continue
+            }
+            i += 1
+        }
+        return tokens
     }
 }
