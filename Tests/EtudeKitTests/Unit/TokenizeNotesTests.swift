@@ -55,6 +55,27 @@ struct TokenizeNotesTests {
         #expect(try sut.tokenize(source) == [.note(expected)])
     }
 
+    @Test("tokenizes Dutch accidental suffixes as part of the pitch", .tags(.unit),
+          arguments: ["fis", "cis", "gis", "bes", "des", "fisis", "beses"])
+    func dutchAccidentals(name: String) throws {
+        let sut = makeSUT()
+        #expect(try sut.tokenize(name) == [.note(NoteToken(name: name))])
+    }
+
+    @Test("classifies words that are not pitch names as identifiers", .tags(.unit),
+          arguments: ["volta", "unfold", "Staff", "Voice", "english", "title"])
+    func nonPitchWords(word: String) throws {
+        let sut = makeSUT()
+        #expect(try sut.tokenize(word) == [.identifier(word)])
+    }
+
+    @Test("an identifier glued to a brace keeps both tokens", .tags(.unit))
+    func identifierGluedToBrace() throws {
+        let sut = makeSUT()
+        // Verbatim shape from the Gnossienne: `\new Voice{\voiceOne …`
+        #expect(try sut.tokenize("Voice{") == [.identifier("Voice"), .braceOpen])
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> Tokenizer { Tokenizer() }

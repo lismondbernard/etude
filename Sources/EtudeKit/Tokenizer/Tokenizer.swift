@@ -71,6 +71,7 @@ public enum Token: Equatable, Sendable {
     case parallelStart
     case parallelEnd
     case command(String)
+    case identifier(String)
 }
 
 /// Scans LilyPond source text into a flat token stream. Stateless between runs;
@@ -102,6 +103,10 @@ public struct Tokenizer: Sendable {
                 }
                 if name == "q" {
                     tokens.append(.chordRepeat(duration: scanDuration(chars, &i)))
+                    continue
+                }
+                guard isPitchName(name) else {
+                    tokens.append(.identifier(name))
                     continue
                 }
                 var octaveMarks = 0
@@ -166,6 +171,22 @@ public struct Tokenizer: Sendable {
         "~": .tie, "(": .slurOpen, ")": .slurClose, "|": .barCheck,
         "{": .braceOpen, "}": .braceClose,
     ]
+
+    /// Dutch note-name grammar: a base letter `a`–`g` plus any run of `is`
+    /// (sharp) / `es` (flat) suffixes. The bare-vowel flats (`as`, `es`) are
+    /// deliberately unsupported until a corpus piece needs them.
+    private func isPitchName(_ word: String) -> Bool {
+        guard let first = word.first, "abcdefg".contains(first) else { return false }
+        var rest = Substring(word.dropFirst())
+        while !rest.isEmpty {
+            if rest.hasPrefix("is") || rest.hasPrefix("es") {
+                rest = rest.dropFirst(2)
+            } else {
+                return false
+            }
+        }
+        return true
+    }
 
     private static let restKinds: [String: RestToken.Kind] = [
         "r": .sounding, "s": .spacer, "R": .multiMeasure,
