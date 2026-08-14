@@ -461,7 +461,7 @@ available (fetch from Mutopia if network allows, else stub with TODO+URLs).
 **Accept:** `swift test` runs (zero tests, green); app target builds and shows an
 empty Library.
 
-### Phase 1 — Tokenizer, test-first
+### Phase 1 — Tokenizer, test-first (done)
 Token model + lexer per §4.1. Write the parameterized token tables and BUG-001/
 BUG-005 regression tests **before** the implementation. Fuzz smoke test. Establish
 the `Helpers/` conventions (§0.6) here — `makeSUT()`, sample builders — so every
