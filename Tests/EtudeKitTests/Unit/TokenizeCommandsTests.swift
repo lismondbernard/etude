@@ -55,6 +55,19 @@ struct TokenizeCommandsTests {
         ])
     }
 
+    @Test("skips comments to the end of the line", .tags(.unit))
+    func comments() throws {
+        let sut = makeSUT()
+        #expect(try sut.tokenize("""
+        % Gymnopédie No. 1 — Erik Satie (composition public domain)
+        c4 % trailing remark with punctuation: <>{}~
+        d4
+        """) == [
+            .note(NoteToken(name: "c", duration: DurationToken(4))),
+            .note(NoteToken(name: "d", duration: DurationToken(4))),
+        ])
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> Tokenizer { Tokenizer() }

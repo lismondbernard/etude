@@ -161,6 +161,12 @@ public struct Tokenizer: Sendable {
                 }
                 continue
             }
+            if c == "%" {
+                while i < chars.count, !chars[i].isNewline {
+                    i += 1
+                }
+                continue
+            }
             if c == "\"" {
                 i += 1
                 var text = ""
