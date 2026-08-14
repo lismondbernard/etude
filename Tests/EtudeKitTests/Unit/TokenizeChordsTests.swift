@@ -28,6 +28,21 @@ struct TokenizeChordsTests {
         ])
     }
 
+    @Test("tokenizes the chord-repeat mark with an optional duration", .tags(.unit))
+    func chordRepeat() throws {
+        let sut = makeSUT()
+        // Verbatim shape from the Gnossienne: `s4 <c' f>2 q4`
+        #expect(try sut.tokenize("s4 <c' f>2 q4 q") == [
+            .rest(RestToken(kind: .spacer, duration: DurationToken(4))),
+            .chordStart,
+            .note(NoteToken(name: "c", octaveMarks: 1)),
+            .note(NoteToken(name: "f")),
+            .chordEnd(duration: DurationToken(2)),
+            .chordRepeat(duration: DurationToken(4)),
+            .chordRepeat(duration: nil),
+        ])
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> Tokenizer { Tokenizer() }
