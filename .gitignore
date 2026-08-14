@@ -10,5 +10,9 @@ xcuserdata/
 DerivedData/
 *.xcuserstate
 
+# Local-only: post drafts and Claude Code operational notes
+drafts/
+CLAUDE.local.md
+
 # macOS
 .DS_Store

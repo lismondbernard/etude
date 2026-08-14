@@ -1,9 +1,148 @@
 # Étude — a LilyPond→MIDI engine and SwiftUI app that teaches testing
 
-**Audience for this document:** Claude Code CLI. This is the build plan. Execute it
-phase by phase; each phase has explicit acceptance criteria. Do not skip the test
-infrastructure to get to features faster — the tests ARE the product as much as the
-app is.
+**Audience for this document:** students and contributors. This is the build plan
+and the course syllabus in one. It is executed phase by phase; each phase has
+explicit acceptance criteria, and the test infrastructure is never deferred to
+reach features faster — the tests ARE the product as much as the app is. §0
+defines the working method that binds every phase — read it before §10.
+
+---
+
+## 0. Method — how this gets built
+
+The discipline below is adapted from the **Essential Developer** curriculum the
+author completed years ago (its public *EssentialFeed* case-study repo shows how
+that codebase evolved commit-by-commit). Étude borrows the *method*, not the material —
+these rules are reshaped for a parser/emitter engine rather than a networked feed
+app, and they are project law for every phase in §10.
+
+### 0.1 The git history is a deliverable
+
+EssentialFeed's history reads as a TDD transcript: 194 commits, nearly every one a
+single red→green→refactor step with a behavior-named subject (*"Delivers
+invalidData on non 200 HTTP responses"*). Étude commits the same way:
+
+- **One behavior per commit** during engine phases. Write the failing test, make
+  it pass minimally, refactor, commit. Never batch multiple behaviors.
+- **Commit subjects name the behavior**, not the file: *"Resolves relative octaves
+  within a fourth of the previous note"*, not *"Update Resolver.swift"*.
+- **Refactor commits are labeled as refactors** (*"Extract duplicate token-table
+  assertions into helper"*) — the history should record the refactoring
+  discipline, not just feature delivery.
+- **Linear `main`**, no long-lived branches. A student should be able to `git log
+  --oneline --reverse` and replay the course.
+- Phase 6 produces Étude's own `HISTORY.md` from this history — if the log doesn't
+  read as a lesson plan, the commits were wrong.
+
+### 0.2 Behavior-first naming
+
+Test files are named for **use cases/behaviors, not types** (EssentialFeed has
+`LoadFeedFromRemoteUseCaseTests`, `CacheFeedUseCaseTests` — not `RemoteFeedLoaderTests`).
+Étude's equivalents: `TokenizeChordsTests`, `ExpandRepeatsTests`,
+`ResolveRelativeOctavesTests` — not `TokenizerTests` grab-bags. Swift Testing
+`@Test` display names state the behavior in domain language: *"delivers a typed
+error on an unterminated chord"*.
+
+### 0.3 Abstractions before implementations
+
+EssentialFeed designed the `HTTPClient` protocol from the consumer's side — the
+real `URLSessionHTTPClient` appeared only after the mapping logic was fully proven
+against a test spy. Étude does the same at its seams:
+
+- Design each seam as a **protocol, from the consumer's side**, often extracted
+  from the test double that drove it (the FeedStore-from-spy move).
+- Étude's seams: **`PieceBuilding`** (app → engine: the view models never see
+  pipeline internals), **`SMFWriting`** (score → bytes), **`CorpusProviding`**
+  (where pieces come from — bundled today, downloadable someday).
+- Concrete adapters land *after* their consumers' tests are green against doubles.
+
+### 0.4 Boundary models stay at boundaries
+
+EssentialFeed keeps `RemoteFeedItem` (API shape) and `LocalFeedImage` (cache
+shape) out of the domain, mapping to `FeedImage` at the seams. Étude's pipeline
+has the same rule, one layer at a time:
+
+- The **parse tree is LilyPond-shaped** (relative pitches, unexpanded repeats,
+  `\times` fractions) and never travels past the Resolver.
+- **`Score` is the domain model** — a musician's vocabulary (voices, bars, ticks),
+  zero LilyPond concepts. A future MusicXML front end must require no `Score` change.
+- The **MIDI writer owns its event model** (delta times, running status concerns);
+  `Score` knows nothing about SMF encoding.
+- Mapping code lives at the seams and is tested there. Don't collapse these
+  models "for convenience" — the separation is the lesson.
+
+### 0.5 Behavioral spec suites make swaps safe
+
+Before EssentialFeed swapped `CodableFeedStore` for `CoreDataFeedStore`, it wrote
+`FeedStoreSpecs` — one reusable behavioral contract both implementations had to
+pass — then deleted the old store in a single commit once CoreData was proven.
+Étude stages the same lesson deliberately:
+
+- When a seam will ever have two implementations, write a **reusable spec suite**
+  first (a protocol listing the required behaviors + shared assertion helpers).
+- The planned swap: §4.5's first SMF writer deliberately skips running status.
+  Phase 6 introduces `SMFWriterSpecs`, implements a running-status writer, proves
+  both against the specs *and* the round-trip property, swaps, and **deletes the
+  naive writer in one commit** — the low-risk-replacement lesson, on purpose.
+
+### 0.6 Shared test-helper discipline
+
+EssentialFeed's tests share `makeSUT()` factories, `expect(_:toCompleteWith:)`
+assertion helpers, sample-data builders, and `trackForMemoryLeaks` in every
+factory. Étude adopts the same shape:
+
+- **`makeSUT()`** per suite; test bodies stay three lines of intent.
+- **Domain sample builders** (`anyNote()`, `gymnopedieOpening()`,
+  `chord(_:duration:)`) in `Tests/EtudeKitTests/Helpers/`.
+- **Assertion helpers** that speak the domain: `expect(_ score:, toOpenWith:)`,
+  `expect(_ writer:, toEmit:)`.
+- **Memory-leak tracking** where reference types live: EtudeKit is value types
+  (§4.4, ADR-0002), so the engine largely can't leak — but the app's view models
+  and the `AVMIDIPlayer` wrapper can. App-layer unit tests use a
+  `trackForMemoryLeaks` teardown helper, same as EssentialFeed.
+
+### 0.7 Ubiquitous language
+
+EssentialFeed renamed its core model Item→Image mid-project because "Image" is
+*"a domain term used by domain experts in the specs"* — and committed the rename
+as its own refactor. Étude's domain language is the musician's: Voice, bar,
+anacrusis, tick, grace note. When a name turns out wrong, rename it the moment the
+domain says so, as a dedicated commit.
+
+### 0.8 Focused sweeps, not dribbled changes
+
+EssentialFeed modernized every hand-rolled result enum to `Swift.Result` in one
+focused single-day sweep — not scattered across feature commits. Any cross-cutting
+idiom change in Étude (error-type reshaping, a Swift language-mode migration)
+gets the same treatment: one dedicated, single-purpose sweep with its own commits.
+
+### 0.9 Architecture principles: SOLID and pragmatic MVVM
+
+§0.1–0.8 *are* SOLID, applied rather than recited — teach the mapping explicitly:
+
+- **S**ingle responsibility → the pipeline layering (§4): each stage does one
+  transformation; boundary models (§0.4) keep it that way.
+- **O**pen/closed → the seams (§0.3): a MusicXML front end or downloadable corpus
+  arrives behind `CorpusProviding` without modifying consumers.
+- **L**iskov substitution → `SMFWriterSpecs` (§0.5) is LSP made executable: any
+  writer passing the behavioral contract is substitutable.
+- **I**nterface segregation → three small seams, never one god `Engine` protocol.
+- **D**ependency inversion → §0.3 wholesale; the `HTTPClient` lesson.
+
+The app layer (§8) follows **MVVM, pragmatically**: a view model exists where
+there is presentation logic or async state worth testing — not one per screen by
+default.
+
+- **PieceDetail** earns one (async build, player state, tempo) — unit-tested
+  against a `PieceBuilding` spy, leak-tracked (§0.6).
+- **Library** stays a plain view over the bundled corpus until the corpus becomes
+  dynamic; a view model there today is boilerplate.
+- **Diagnostics** formats Validator findings — pure functions, more testable than
+  a view model would be.
+- **No ceremony:** don't protocol-ize view models, don't add coordinator/router
+  layers for three screens. SwiftUI's `@Observable` is the binding machinery;
+  chase testability, not textbook shape. Knowing when *not* to add a view model
+  is part of the curriculum.
 
 ---
 
@@ -58,6 +197,7 @@ etude/
 │       └── MIDI/                  # Score → [UInt8] Type-1 SMF writer + minimal SMF reader (for round-trips)
 ├── Tests/
 │   └── EtudeKitTests/
+│       ├── Helpers/               # makeSUT factories, sample builders, assertion helpers (§0.6)
 │       ├── Unit/                  # table-driven tokenizer/parser tests
 │       ├── Property/              # generator-based law tests
 │       ├── Regression/            # BUG-001…BUG-006, one file each, story in doc comment
@@ -114,8 +254,14 @@ in designing for testability.
 - **Golden files:** known-good `.mid` fixtures live in test resources
   (`Bundle.module`). Compare bytes; on mismatch, print a structured event-level
   diff (decode both with the SMF reader) so failures are diagnosable, not just red.
+- **Shared helpers** (per §0.6): `makeSUT()` factories, domain sample builders,
+  and assertion helpers live in `Tests/EtudeKitTests/Helpers/`; app-layer tests
+  add a `trackForMemoryLeaks` teardown helper.
 - **CI:** GitHub Actions, `macos-15` runner: `swift test` for EtudeKit (fast lane)
-  and `xcodebuild test` for app + UI tests (slow lane, can be nightly).
+  and `xcodebuild test` for app + UI tests (slow lane, can be nightly). The lane
+  split is the EssentialFeed lesson in target design: the engine tests run on
+  macOS with no simulator *because* EtudeKit has zero UI imports — testability is
+  an architecture property, not a tooling trick.
 
 ---
 
@@ -177,12 +323,15 @@ failure; designing errors as data (findings list) not just throws.
 
 ### 4.5 MIDI writer (+ minimal reader) — `Score` → `[UInt8]`
 Standard MIDI File Type 1: `MThd` (format 1, ntrks, division e.g. 480 tpq), one
-tempo/meta track + one `MTrk` per voice, running status optional (keep it simple:
-don't use it, and say why in a comment), every track ends with End-of-Track. A
-minimal reader parses SMF back to events for round-trip tests.
+tempo/meta track + one `MTrk` per voice, running status **deliberately omitted**
+in the first writer (say why in a comment — it is the seed of the §0.5 swap
+lesson), every track ends with End-of-Track. The writer sits behind the
+`SMFWriting` seam (§0.3). A minimal reader parses SMF back to events for
+round-trip tests.
 *Lessons:* golden-file byte comparison against the six known-good fixtures;
 round-trip property (write→read == identity on events); structural checks (header
-magic, track terminators, EOF) as cheap smoke tests.
+magic, track terminators, EOF) as cheap smoke tests. In Phase 6, `SMFWriterSpecs`
++ a running-status writer replay the safe-replacement lesson (§0.5).
 
 ### 4.6 Corpus acceptance suite
 For each corpus piece: parse → resolve → validate → emit → assert the structural
@@ -273,9 +422,14 @@ stated in README).
    the six; Clair de Lune intentionally shows its alignment failure — the app is
    honest in the UI the same way the tests are).
 
-**Architecture:** thin observable view models over `EtudeKit`; builds run off the
-main actor; every interactive element gets a stable `accessibilityIdentifier`
+**Architecture:** thin observable view models over `EtudeKit` — only where §0.9
+says a screen earns one — talking to the engine through the `PieceBuilding` seam
+(§0.3) so view-model unit tests run against a spy with no real parsing; builds
+run off the main actor; every
+interactive element gets a stable `accessibilityIdentifier`
 (e.g. `library.row.gymnopedie-1`, `detail.button.build`, `detail.slider.tempo`).
+View-model and player-wrapper unit tests use `makeSUT()` + `trackForMemoryLeaks`
+(§0.6) — the app layer is where reference types (and leaks) live.
 
 **UI-test curriculum (XCUITest):**
 - Page objects (`LibraryScreen`, `PieceDetailScreen`) wrapping queries + waits —
@@ -301,9 +455,13 @@ main actor; every interactive element gets a stable `accessibilityIdentifier`
 
 ---
 
-## 10. Build phases for Claude Code (execute in order)
+## 10. Build phases (executed in order)
 
-### Phase 0 — Scaffold (this session)
+Every phase from 1 onward is executed under the §0 method: one behavior per
+commit, behavior-named subjects, red→green→refactor. "History reads as a TDD
+narrative" is an acceptance criterion of every phase, not a style preference.
+
+### Phase 0 — Scaffold (done)
 SPM package + Xcode workspace per §2; CI workflow; LICENSE, README (project
 pitch + the "no subtly wrong music" policy), CONTRIBUTING (test taxonomy, PRs
 require tests); empty ADR/lessons templates; vendor whatever corpus files are
@@ -313,13 +471,18 @@ empty Library.
 
 ### Phase 1 — Tokenizer, test-first
 Token model + lexer per §4.1. Write the parameterized token tables and BUG-001/
-BUG-005 regression tests **before** the implementation. Fuzz smoke test.
+BUG-005 regression tests **before** the implementation. Fuzz smoke test. Establish
+the `Helpers/` conventions (§0.6) here — `makeSUT()`, sample builders — so every
+later phase inherits them.
 **Accept:** tokenizes the Gymnopédie and Gnossienne sources end-to-end without
-error; all Unit+Regression tests green.
+error; all Unit+Regression tests green; `git log` for the phase reads as
+red→green→refactor steps (§0.1).
 
 ### Phase 2 — Parser + Resolver
 Event tree, then relative-octave resolution, repeats, tuplets, graces per
 §4.2–4.3. BUG-002/BUG-003 regression tests; the three resolver property tests.
+Enforce the boundary-model rule (§0.4): the LilyPond-shaped tree must not appear
+in any signature past the Resolver.
 **Accept:** Gymnopédie and Gnossienne resolve to correct opening fingerprints and
 bar counts (78 and 82 bars).
 
@@ -336,13 +499,20 @@ Lune under `withKnownIssue`; write `docs/lessons/` entries for all six bugs.
 
 ### Phase 5 — App MVP + UI tests
 Screens per §8, page objects, the three UI test flows, accessibility identifiers
-throughout.
+throughout. View models built against a `PieceBuilding` spy first (§0.3); leak
+tracking in every app-layer `makeSUT()` (§0.6).
 **Accept:** UI tests green on simulator; export produces a `.mid` that GarageBand
 opens (manual check).
 
 ### Phase 6 — Polish for store + course
 App icon, credits/licenses screen, README course map ("which test to read first"),
-tag `v0.1.0`.
+plus the two capstone lessons from §0:
+- **The swap (§0.5):** write `SMFWriterSpecs` against the existing writer, add a
+  running-status `SMFWriter`, prove both against the specs + round-trip property
+  + re-baselined goldens, then delete the naive writer in a single commit.
+- **The history (§0.1):** generate Étude's `HISTORY.md` from the git log; if the
+  narrative has gaps, that's a retrospective finding, not something to backfill.
+Tag `v0.1.0`.
 
 ---
 
