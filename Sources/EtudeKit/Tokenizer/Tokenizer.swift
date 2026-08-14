@@ -19,8 +19,6 @@ public enum TokenizerError: Error, Equatable, Sendable {
     case malformedNumber(line: Int, column: Int)
 }
 
-/// A pitch as it appears lexically — one glued word like `fis'4.`, kept whole
-/// because splitting it would lose the guarantee that its parts were adjacent.
 /// A duration as written: the reciprocal note value (`4` = quarter) plus dots.
 public struct DurationToken: Equatable, Sendable {
     public let value: Int
@@ -32,6 +30,8 @@ public struct DurationToken: Equatable, Sendable {
     }
 }
 
+/// A pitch as it appears lexically — one glued word like `fis'4.`, kept whole
+/// because splitting it would lose the guarantee that its parts were adjacent.
 public struct NoteToken: Equatable, Sendable {
     public let name: String
     /// Net octave adjustment: +1 per `'`, −1 per `,`.
@@ -128,23 +128,7 @@ public struct Tokenizer: Sendable {
                     tokens.append(.identifier(name))
                     continue
                 }
-                var octaveMarks = 0
-                while i < chars.count, chars[i] == "'" || chars[i] == "," {
-                    octaveMarks += chars[i] == "'" ? 1 : -1
-                    i += 1
-                }
-                var forced = false
-                if i < chars.count, chars[i] == "!" {
-                    forced = true
-                    i += 1
-                }
-                let duration = try scanDuration(chars, &i)
-                tokens.append(.note(NoteToken(
-                    name: name,
-                    octaveMarks: octaveMarks,
-                    forcedAccidental: forced,
-                    duration: duration
-                )))
+                tokens.append(.note(try scanNoteSuffixes(named: name, chars, &i)))
                 continue
             }
             if c == "\\" {
@@ -295,6 +279,29 @@ public struct Tokenizer: Sendable {
     private static let restKinds: [String: RestToken.Kind] = [
         "r": .sounding, "s": .spacer, "R": .multiMeasure,
     ]
+
+    /// Consumes a pitch word's glued suffixes — octave marks, forced
+    /// accidental, duration — and assembles the note token.
+    private func scanNoteSuffixes(
+        named name: String, _ chars: [Character], _ i: inout Int
+    ) throws(TokenizerError) -> NoteToken {
+        var octaveMarks = 0
+        while i < chars.count, chars[i] == "'" || chars[i] == "," {
+            octaveMarks += chars[i] == "'" ? 1 : -1
+            i += 1
+        }
+        var forced = false
+        if i < chars.count, chars[i] == "!" {
+            forced = true
+            i += 1
+        }
+        return NoteToken(
+            name: name,
+            octaveMarks: octaveMarks,
+            forcedAccidental: forced,
+            duration: try scanDuration(chars, &i)
+        )
+    }
 
     /// Consumes an optional written duration (`4`, `2.`, `16..`) at `i`.
     private func scanDuration(_ chars: [Character], _ i: inout Int) throws(TokenizerError) -> DurationToken? {
