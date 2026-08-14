@@ -75,6 +75,7 @@ public enum Token: Equatable, Sendable {
     case number(Int)
     case slash
     case equals
+    case string(String)
 }
 
 /// Scans LilyPond source text into a flat token stream. Stateless between runs;
@@ -158,6 +159,17 @@ public struct Tokenizer: Sendable {
                     i += 1
                     tokens.append(.chordEnd(duration: scanDuration(chars, &i)))
                 }
+                continue
+            }
+            if c == "\"" {
+                i += 1
+                var text = ""
+                while i < chars.count, chars[i] != "\"" {
+                    text.append(chars[i])
+                    i += 1
+                }
+                i += 1
+                tokens.append(.string(text))
                 continue
             }
             if c.isNumber {

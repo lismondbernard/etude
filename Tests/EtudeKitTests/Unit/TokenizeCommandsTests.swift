@@ -47,6 +47,14 @@ struct TokenizeCommandsTests {
         ])
     }
 
+    @Test("tokenizes a quoted string, preserving inner spaces", .tags(.unit))
+    func quotedString() throws {
+        let sut = makeSUT()
+        #expect(try sut.tokenize("title = \"Gnossienne No. 1\"") == [
+            .identifier("title"), .equals, .string("Gnossienne No. 1"),
+        ])
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> Tokenizer { Tokenizer() }
