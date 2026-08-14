@@ -43,6 +43,19 @@ struct TokenizeChordsTests {
         ])
     }
 
+    @Test("distinguishes parallel markers from chord delimiters", .tags(.unit))
+    func parallelMarkers() throws {
+        let sut = makeSUT()
+        #expect(try sut.tokenize("<< <c e>2 >>") == [
+            .parallelStart,
+            .chordStart,
+            .note(NoteToken(name: "c")),
+            .note(NoteToken(name: "e")),
+            .chordEnd(duration: DurationToken(2)),
+            .parallelEnd,
+        ])
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> Tokenizer { Tokenizer() }

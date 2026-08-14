@@ -68,6 +68,8 @@ public enum Token: Equatable, Sendable {
     case chordStart
     case chordEnd(duration: DurationToken?)
     case chordRepeat(duration: DurationToken?)
+    case parallelStart
+    case parallelEnd
 }
 
 /// Scans LilyPond source text into a flat token stream. Stateless between runs;
@@ -80,6 +82,7 @@ public struct Tokenizer: Sendable {
         var tokens: [Token] = []
         let chars = Array(source)
         var i = 0
+        var inChord = false
         while i < chars.count {
             let c = chars[i]
             if c.isWhitespace {
@@ -110,13 +113,32 @@ public struct Tokenizer: Sendable {
                 continue
             }
             if c == "<" {
-                tokens.append(.chordStart)
-                i += 1
+                // `<<` opens simultaneous music; a single `<` opens a chord.
+                if i + 1 < chars.count, chars[i + 1] == "<", !inChord {
+                    tokens.append(.parallelStart)
+                    i += 2
+                } else {
+                    tokens.append(.chordStart)
+                    inChord = true
+                    i += 1
+                }
                 continue
             }
             if c == ">" {
-                i += 1
-                tokens.append(.chordEnd(duration: scanDuration(chars, &i)))
+                // Inside a chord, `>` always closes the chord — even when the
+                // very next character is another `>` (as in `…>>` after a glued
+                // `<<chord`). Outside one, `>>` closes simultaneous music.
+                if inChord {
+                    inChord = false
+                    i += 1
+                    tokens.append(.chordEnd(duration: scanDuration(chars, &i)))
+                } else if i + 1 < chars.count, chars[i + 1] == ">" {
+                    tokens.append(.parallelEnd)
+                    i += 2
+                } else {
+                    i += 1
+                    tokens.append(.chordEnd(duration: scanDuration(chars, &i)))
+                }
                 continue
             }
             if let mark = Self.marks[c] {
