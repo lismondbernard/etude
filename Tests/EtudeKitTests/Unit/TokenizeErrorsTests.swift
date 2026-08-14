@@ -11,6 +11,14 @@ struct TokenizeErrorsTests {
         }
     }
 
+    @Test("delivers a typed error on an unterminated string", .tags(.unit))
+    func unterminatedString() throws {
+        let sut = makeSUT()
+        #expect(throws: TokenizerError.unterminatedString(line: 1, column: 8)) {
+            try sut.tokenize("\\tempo \"Lent")
+        }
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> Tokenizer { Tokenizer() }

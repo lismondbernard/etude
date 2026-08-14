@@ -14,6 +14,7 @@
 /// A lexical error, carrying enough location to be diagnosable.
 public enum TokenizerError: Error, Equatable, Sendable {
     case unexpectedCharacter(Character, line: Int, column: Int)
+    case unterminatedString(line: Int, column: Int)
 }
 
 /// A pitch as it appears lexically — one glued word like `fis'4.`, kept whole
@@ -189,11 +190,16 @@ public struct Tokenizer: Sendable {
                 continue
             }
             if c == "\"" {
+                let opening = i
                 i += 1
                 var text = ""
                 while i < chars.count, chars[i] != "\"" {
                     text.append(chars[i])
                     i += 1
+                }
+                guard i < chars.count else {
+                    let (line, column) = location(of: opening, in: chars)
+                    throw TokenizerError.unterminatedString(line: line, column: column)
                 }
                 i += 1
                 // A string names the note language when it follows `\language`
