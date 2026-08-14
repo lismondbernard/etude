@@ -59,6 +59,10 @@ public struct RestToken: Equatable, Sendable {
 public enum Token: Equatable, Sendable {
     case note(NoteToken)
     case rest(RestToken)
+    case tie
+    case slurOpen
+    case slurClose
+    case barCheck
 }
 
 /// Scans LilyPond source text into a flat token stream. Stateless between runs;
@@ -96,10 +100,19 @@ public struct Tokenizer: Sendable {
                 tokens.append(.note(NoteToken(name: name, octaveMarks: octaveMarks, duration: duration)))
                 continue
             }
+            if let mark = Self.marks[c] {
+                tokens.append(mark)
+                i += 1
+                continue
+            }
             i += 1
         }
         return tokens
     }
+
+    private static let marks: [Character: Token] = [
+        "~": .tie, "(": .slurOpen, ")": .slurClose, "|": .barCheck,
+    ]
 
     private static let restKinds: [String: RestToken.Kind] = [
         "r": .sounding, "s": .spacer, "R": .multiMeasure,
