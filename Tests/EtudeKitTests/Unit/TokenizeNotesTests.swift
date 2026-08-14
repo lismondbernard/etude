@@ -34,6 +34,15 @@ struct TokenizeNotesTests {
         ])
     }
 
+    @Test("tokenizes octave marks into a signed count", .tags(.unit), arguments: [
+        ("c'", 1), ("c''", 2), ("fis'", 1), ("c,", -1), ("bes,,", -2), ("c", 0),
+    ])
+    func octaveMarks(source: String, marks: Int) throws {
+        let sut = makeSUT()
+        let name = String(source.prefix(while: \.isLetter))
+        #expect(try sut.tokenize(source) == [.note(NoteToken(name: name, octaveMarks: marks))])
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> Tokenizer { Tokenizer() }

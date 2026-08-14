@@ -18,9 +18,12 @@ public enum TokenizerError: Error, Equatable, Sendable {}
 /// because splitting it would lose the guarantee that its parts were adjacent.
 public struct NoteToken: Equatable, Sendable {
     public let name: String
+    /// Net octave adjustment: +1 per `'`, −1 per `,`.
+    public let octaveMarks: Int
 
-    public init(name: String) {
+    public init(name: String, octaveMarks: Int = 0) {
         self.name = name
+        self.octaveMarks = octaveMarks
     }
 }
 
@@ -46,12 +49,17 @@ public struct Tokenizer: Sendable {
                 continue
             }
             if c.isLetter {
-                var word = ""
+                var name = ""
                 while i < chars.count, chars[i].isLetter {
-                    word.append(chars[i])
+                    name.append(chars[i])
                     i += 1
                 }
-                tokens.append(.note(NoteToken(name: word)))
+                var octaveMarks = 0
+                while i < chars.count, chars[i] == "'" || chars[i] == "," {
+                    octaveMarks += chars[i] == "'" ? 1 : -1
+                    i += 1
+                }
+                tokens.append(.note(NoteToken(name: name, octaveMarks: octaveMarks)))
                 continue
             }
             i += 1
