@@ -33,6 +33,20 @@ struct TokenizeCommandsTests {
         ])
     }
 
+    @Test("tokenizes meter fractions and tempo assignments", .tags(.unit))
+    func metersAndTempos() throws {
+        let sut = makeSUT()
+        #expect(try sut.tokenize("\\time 3/4") == [
+            .command("time"), .number(3), .slash, .number(4),
+        ])
+        #expect(try sut.tokenize("\\tempo 4 = 66") == [
+            .command("tempo"), .number(4), .equals, .number(66),
+        ])
+        #expect(try sut.tokenize("\\repeat volta 2") == [
+            .command("repeat"), .identifier("volta"), .number(2),
+        ])
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> Tokenizer { Tokenizer() }

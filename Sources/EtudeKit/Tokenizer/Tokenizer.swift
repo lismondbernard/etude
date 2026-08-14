@@ -72,6 +72,9 @@ public enum Token: Equatable, Sendable {
     case parallelEnd
     case command(String)
     case identifier(String)
+    case number(Int)
+    case slash
+    case equals
 }
 
 /// Scans LilyPond source text into a flat token stream. Stateless between runs;
@@ -157,6 +160,15 @@ public struct Tokenizer: Sendable {
                 }
                 continue
             }
+            if c.isNumber {
+                var digits = ""
+                while i < chars.count, chars[i].isNumber {
+                    digits.append(chars[i])
+                    i += 1
+                }
+                tokens.append(.number(Int(digits) ?? 0))
+                continue
+            }
             if let mark = Self.marks[c] {
                 tokens.append(mark)
                 i += 1
@@ -169,7 +181,7 @@ public struct Tokenizer: Sendable {
 
     private static let marks: [Character: Token] = [
         "~": .tie, "(": .slurOpen, ")": .slurClose, "|": .barCheck,
-        "{": .braceOpen, "}": .braceClose,
+        "{": .braceOpen, "}": .braceClose, "/": .slash, "=": .equals,
     ]
 
     /// Dutch note-name grammar: a base letter `a`–`g` plus any run of `is`
