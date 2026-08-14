@@ -14,8 +14,8 @@ only.
 | Minuet in G | `minuet-in-g.ly` | stub | Mutopia — public domain | Full AABB, from prototype `minuet_full.py`. |
 | Prelude in C | `prelude-in-c.ly` | stub | n/a — see note | Prototype exported from **music21 corpus**, not a Mutopia `.ly`. Decide: typeset a simple `.ly`, or keep golden-MIDI-only. |
 | Air on the G String | `air-on-the-g-string.ly` | stub | Mutopia — public domain | Flute + guitar-upper only; bass omitted (edition repeat mismatch). |
-| Gymnopédie No. 1 | `gymnopedie-1.ly` | stub | Mutopia — public domain | Watch BUG-004 ending register. |
-| Gnossienne No. 1 | `gnossienne-1.ly` | stub | Mutopia — public domain | English note names; `q` chord-repeat. |
+| Gymnopédie No. 1 | `gymnopedie-1.ly` | **reconstructed** | Étude typesetting (Apache-2.0); note text via prototype from a Mutopia edition (PD — verify header) | Not the Mutopia typesetting: performing text rebuilt from `music/gymnopedie.py` streams. Watch BUG-004 ending register. |
+| Gnossienne No. 1 | `gnossienne-1.ly` | **reconstructed** | Note text via prototype from a Mutopia edition its docstring calls **CC-BY-SA** — verify header before repo goes public | English note names; `q` chord-repeat; BUG-005 fragment preserved verbatim. If CC-BY-SA is confirmed to reach the reconstruction, attribute typesetter + share-alike this file. |
 | Winter — Largo | `winter-largo/` | stub (multi-part) | **CC-BY-SA** | Attribution required to redistribute the `.ly`. |
 
 ## Action items before replacing any stub with a real `.ly`
