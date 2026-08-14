@@ -43,6 +43,18 @@ struct TokenizeNotesTests {
         #expect(try sut.tokenize(source) == [.note(NoteToken(name: name, octaveMarks: marks))])
     }
 
+    @Test("tokenizes a duration with dots glued to the note", .tags(.unit), arguments: [
+        ("c4", NoteToken(name: "c", duration: DurationToken(4))),
+        ("f1", NoteToken(name: "f", duration: DurationToken(1))),
+        ("fis2.", NoteToken(name: "fis", duration: DurationToken(2, dots: 1))),
+        ("e,2.", NoteToken(name: "e", octaveMarks: -1, duration: DurationToken(2, dots: 1))),
+        ("c''8", NoteToken(name: "c", octaveMarks: 2, duration: DurationToken(8))),
+    ])
+    func gluedDuration(source: String, expected: NoteToken) throws {
+        let sut = makeSUT()
+        #expect(try sut.tokenize(source) == [.note(expected)])
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> Tokenizer { Tokenizer() }

@@ -16,14 +16,27 @@ public enum TokenizerError: Error, Equatable, Sendable {}
 
 /// A pitch as it appears lexically — one glued word like `fis'4.`, kept whole
 /// because splitting it would lose the guarantee that its parts were adjacent.
+/// A duration as written: the reciprocal note value (`4` = quarter) plus dots.
+public struct DurationToken: Equatable, Sendable {
+    public let value: Int
+    public let dots: Int
+
+    public init(_ value: Int, dots: Int = 0) {
+        self.value = value
+        self.dots = dots
+    }
+}
+
 public struct NoteToken: Equatable, Sendable {
     public let name: String
     /// Net octave adjustment: +1 per `'`, −1 per `,`.
     public let octaveMarks: Int
+    public let duration: DurationToken?
 
-    public init(name: String, octaveMarks: Int = 0) {
+    public init(name: String, octaveMarks: Int = 0, duration: DurationToken? = nil) {
         self.name = name
         self.octaveMarks = octaveMarks
+        self.duration = duration
     }
 }
 
@@ -59,11 +72,28 @@ public struct Tokenizer: Sendable {
                     octaveMarks += chars[i] == "'" ? 1 : -1
                     i += 1
                 }
-                tokens.append(.note(NoteToken(name: name, octaveMarks: octaveMarks)))
+                let duration = scanDuration(chars, &i)
+                tokens.append(.note(NoteToken(name: name, octaveMarks: octaveMarks, duration: duration)))
                 continue
             }
             i += 1
         }
         return tokens
+    }
+
+    /// Consumes an optional written duration (`4`, `2.`, `16..`) at `i`.
+    private func scanDuration(_ chars: [Character], _ i: inout Int) -> DurationToken? {
+        var digits = ""
+        while i < chars.count, chars[i].isNumber {
+            digits.append(chars[i])
+            i += 1
+        }
+        guard let value = Int(digits) else { return nil }
+        var dots = 0
+        while i < chars.count, chars[i] == "." {
+            dots += 1
+            i += 1
+        }
+        return DurationToken(value, dots: dots)
     }
 }
