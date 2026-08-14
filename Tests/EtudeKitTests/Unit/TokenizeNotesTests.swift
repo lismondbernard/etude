@@ -85,6 +85,31 @@ struct TokenizeNotesTests {
         ])
     }
 
+    @Test("switches note-name grammar when the source selects English", .tags(.unit))
+    func englishLanguageSwitch() throws {
+        let sut = makeSUT()
+        // `af` is not a Dutch pitch — until `\language "english"` makes it A-flat.
+        #expect(try sut.tokenize("af \\language \"english\" af8 cs ef bf,,1") == [
+            .identifier("af"),
+            .command("language"),
+            .string("english"),
+            .note(NoteToken(name: "af", duration: DurationToken(8))),
+            .note(NoteToken(name: "cs")),
+            .note(NoteToken(name: "ef")),
+            .note(NoteToken(name: "bf", octaveMarks: -2, duration: DurationToken(1))),
+        ])
+    }
+
+    @Test("including english.ly also switches the note-name grammar", .tags(.unit))
+    func englishIncludeSwitch() throws {
+        let sut = makeSUT()
+        #expect(try sut.tokenize("\\include \"english.ly\" df2") == [
+            .command("include"),
+            .string("english.ly"),
+            .note(NoteToken(name: "df", duration: DurationToken(2))),
+        ])
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> Tokenizer { Tokenizer() }

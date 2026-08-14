@@ -97,6 +97,7 @@ public struct Tokenizer: Sendable {
         let chars = Array(source)
         var i = 0
         var inChord = false
+        var language = NoteLanguage.dutch
         while i < chars.count {
             let c = chars[i]
             if c.isWhitespace {
@@ -117,7 +118,7 @@ public struct Tokenizer: Sendable {
                     tokens.append(.chordRepeat(duration: scanDuration(chars, &i)))
                     continue
                 }
-                guard isPitchName(name) else {
+                guard isPitchName(name, language: language) else {
                     tokens.append(.identifier(name))
                     continue
                 }
@@ -193,6 +194,13 @@ public struct Tokenizer: Sendable {
                     i += 1
                 }
                 i += 1
+                // A string names the note language when it follows `\language`
+                // or an `\include` of a language file.
+                if case .command(let name) = tokens.last,
+                   name == "language" || name == "include",
+                   text == "english" || text == "english.ly" {
+                    language = .english
+                }
                 tokens.append(.string(text))
                 continue
             }
@@ -220,20 +228,31 @@ public struct Tokenizer: Sendable {
         "{": .braceOpen, "}": .braceClose, "/": .slash, "=": .equals,
     ]
 
-    /// Dutch note-name grammar: a base letter `a`–`g` plus any run of `is`
-    /// (sharp) / `es` (flat) suffixes. The bare-vowel flats (`as`, `es`) are
-    /// deliberately unsupported until a corpus piece needs them.
-    private func isPitchName(_ word: String) -> Bool {
+    private enum NoteLanguage {
+        case dutch, english
+    }
+
+    /// Dutch grammar: a base letter `a`–`g` plus any run of `is` (sharp) /
+    /// `es` (flat) suffixes — the bare-vowel flats (`as`, `es`) are deliberately
+    /// unsupported until a corpus piece needs them. English grammar (`cs`/`df`
+    /// style): the base letter plus one of `s`, `f`, `ss`, `ff`.
+    private func isPitchName(_ word: String, language: NoteLanguage) -> Bool {
         guard let first = word.first, "abcdefg".contains(first) else { return false }
-        var rest = Substring(word.dropFirst())
-        while !rest.isEmpty {
-            if rest.hasPrefix("is") || rest.hasPrefix("es") {
-                rest = rest.dropFirst(2)
-            } else {
-                return false
+        let rest = Substring(word.dropFirst())
+        switch language {
+        case .dutch:
+            var suffix = rest
+            while !suffix.isEmpty {
+                if suffix.hasPrefix("is") || suffix.hasPrefix("es") {
+                    suffix = suffix.dropFirst(2)
+                } else {
+                    return false
+                }
             }
+            return true
+        case .english:
+            return ["", "s", "f", "ss", "ff"].contains(rest)
         }
-        return true
     }
 
     private static let restKinds: [String: RestToken.Kind] = [
