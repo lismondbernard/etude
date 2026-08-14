@@ -12,7 +12,9 @@
 // only throw a typed `TokenizerError` (fuzz smoke test guards this).
 
 /// A lexical error, carrying enough location to be diagnosable.
-public enum TokenizerError: Error, Equatable, Sendable {}
+public enum TokenizerError: Error, Equatable, Sendable {
+    case unexpectedCharacter(Character, line: Int, column: Int)
+}
 
 /// A pitch as it appears lexically — one glued word like `fis'4.`, kept whole
 /// because splitting it would lose the guarantee that its parts were adjacent.
@@ -218,9 +220,25 @@ public struct Tokenizer: Sendable {
                 i += 1
                 continue
             }
-            i += 1
+            let (line, column) = location(of: i, in: chars)
+            throw TokenizerError.unexpectedCharacter(c, line: line, column: column)
         }
         return tokens
+    }
+
+    /// 1-based line/column of `index` — computed only on the error path, so the
+    /// scanning loop carries no position bookkeeping.
+    private func location(of index: Int, in chars: [Character]) -> (line: Int, column: Int) {
+        var line = 1, column = 1
+        for c in chars.prefix(index) {
+            if c.isNewline {
+                line += 1
+                column = 1
+            } else {
+                column += 1
+            }
+        }
+        return (line, column)
     }
 
     private static let marks: [Character: Token] = [
