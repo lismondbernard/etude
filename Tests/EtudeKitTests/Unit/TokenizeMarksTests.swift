@@ -21,6 +21,16 @@ struct TokenizeMarksTests {
         ])
     }
 
+    @Test("tokenizes grouping braces as structural tokens", .tags(.unit))
+    func groupingBraces() throws {
+        let sut = makeSUT()
+        #expect(try sut.tokenize("{ c4 }") == [
+            .braceOpen,
+            .note(NoteToken(name: "c", duration: DurationToken(4))),
+            .braceClose,
+        ])
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> Tokenizer { Tokenizer() }

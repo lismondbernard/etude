@@ -63,6 +63,8 @@ public enum Token: Equatable, Sendable {
     case slurOpen
     case slurClose
     case barCheck
+    case braceOpen
+    case braceClose
 }
 
 /// Scans LilyPond source text into a flat token stream. Stateless between runs;
@@ -112,6 +114,7 @@ public struct Tokenizer: Sendable {
 
     private static let marks: [Character: Token] = [
         "~": .tie, "(": .slurOpen, ")": .slurClose, "|": .barCheck,
+        "{": .braceOpen, "}": .braceClose,
     ]
 
     private static let restKinds: [String: RestToken.Kind] = [
