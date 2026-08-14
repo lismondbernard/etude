@@ -65,6 +65,8 @@ public enum Token: Equatable, Sendable {
     case barCheck
     case braceOpen
     case braceClose
+    case chordStart
+    case chordEnd(duration: DurationToken?)
 }
 
 /// Scans LilyPond source text into a flat token stream. Stateless between runs;
@@ -100,6 +102,16 @@ public struct Tokenizer: Sendable {
                 }
                 let duration = scanDuration(chars, &i)
                 tokens.append(.note(NoteToken(name: name, octaveMarks: octaveMarks, duration: duration)))
+                continue
+            }
+            if c == "<" {
+                tokens.append(.chordStart)
+                i += 1
+                continue
+            }
+            if c == ">" {
+                i += 1
+                tokens.append(.chordEnd(duration: scanDuration(chars, &i)))
                 continue
             }
             if let mark = Self.marks[c] {
