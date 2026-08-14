@@ -40,9 +40,25 @@ public struct NoteToken: Equatable, Sendable {
     }
 }
 
+/// A written rest: `r` (sounding), `s` (spacer), or `R` (multi-measure).
+public struct RestToken: Equatable, Sendable {
+    public enum Kind: Equatable, Sendable {
+        case sounding, spacer, multiMeasure
+    }
+
+    public let kind: Kind
+    public let duration: DurationToken?
+
+    public init(kind: Kind, duration: DurationToken? = nil) {
+        self.kind = kind
+        self.duration = duration
+    }
+}
+
 /// One lexical unit of LilyPond source.
 public enum Token: Equatable, Sendable {
     case note(NoteToken)
+    case rest(RestToken)
 }
 
 /// Scans LilyPond source text into a flat token stream. Stateless between runs;
@@ -67,6 +83,10 @@ public struct Tokenizer: Sendable {
                     name.append(chars[i])
                     i += 1
                 }
+                if let restKind = Self.restKinds[name] {
+                    tokens.append(.rest(RestToken(kind: restKind, duration: scanDuration(chars, &i))))
+                    continue
+                }
                 var octaveMarks = 0
                 while i < chars.count, chars[i] == "'" || chars[i] == "," {
                     octaveMarks += chars[i] == "'" ? 1 : -1
@@ -80,6 +100,10 @@ public struct Tokenizer: Sendable {
         }
         return tokens
     }
+
+    private static let restKinds: [String: RestToken.Kind] = [
+        "r": .sounding, "s": .spacer, "R": .multiMeasure,
+    ]
 
     /// Consumes an optional written duration (`4`, `2.`, `16..`) at `i`.
     private func scanDuration(_ chars: [Character], _ i: inout Int) -> DurationToken? {
