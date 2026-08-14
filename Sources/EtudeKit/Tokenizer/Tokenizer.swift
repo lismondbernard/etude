@@ -16,6 +16,7 @@ public enum TokenizerError: Error, Equatable, Sendable {
     case unexpectedCharacter(Character, line: Int, column: Int)
     case unterminatedString(line: Int, column: Int)
     case unterminatedChord(line: Int, column: Int)
+    case malformedNumber(line: Int, column: Int)
 }
 
 /// A pitch as it appears lexically — one glued word like `fis'4.`, kept whole
@@ -116,11 +117,11 @@ public struct Tokenizer: Sendable {
                     i += 1
                 }
                 if let restKind = Self.restKinds[name] {
-                    tokens.append(.rest(RestToken(kind: restKind, duration: scanDuration(chars, &i))))
+                    tokens.append(.rest(RestToken(kind: restKind, duration: try scanDuration(chars, &i))))
                     continue
                 }
                 if name == "q" {
-                    tokens.append(.chordRepeat(duration: scanDuration(chars, &i)))
+                    tokens.append(.chordRepeat(duration: try scanDuration(chars, &i)))
                     continue
                 }
                 guard isPitchName(name, language: language) else {
@@ -137,7 +138,7 @@ public struct Tokenizer: Sendable {
                     forced = true
                     i += 1
                 }
-                let duration = scanDuration(chars, &i)
+                let duration = try scanDuration(chars, &i)
                 tokens.append(.note(NoteToken(
                     name: name,
                     octaveMarks: octaveMarks,
@@ -176,13 +177,13 @@ public struct Tokenizer: Sendable {
                 if inChord {
                     inChord = false
                     i += 1
-                    tokens.append(.chordEnd(duration: scanDuration(chars, &i)))
+                    tokens.append(.chordEnd(duration: try scanDuration(chars, &i)))
                 } else if i + 1 < chars.count, chars[i + 1] == ">" {
                     tokens.append(.parallelEnd)
                     i += 2
                 } else {
                     i += 1
-                    tokens.append(.chordEnd(duration: scanDuration(chars, &i)))
+                    tokens.append(.chordEnd(duration: try scanDuration(chars, &i)))
                 }
                 continue
             }
@@ -216,12 +217,17 @@ public struct Tokenizer: Sendable {
                 continue
             }
             if c.isNumber {
+                let start = i
                 var digits = ""
                 while i < chars.count, chars[i].isNumber {
                     digits.append(chars[i])
                     i += 1
                 }
-                tokens.append(.number(Int(digits) ?? 0))
+                guard let value = Int(digits) else {
+                    let (line, column) = location(of: start, in: chars)
+                    throw TokenizerError.malformedNumber(line: line, column: column)
+                }
+                tokens.append(.number(value))
                 continue
             }
             if let mark = Self.marks[c] {
@@ -291,13 +297,18 @@ public struct Tokenizer: Sendable {
     ]
 
     /// Consumes an optional written duration (`4`, `2.`, `16..`) at `i`.
-    private func scanDuration(_ chars: [Character], _ i: inout Int) -> DurationToken? {
+    private func scanDuration(_ chars: [Character], _ i: inout Int) throws(TokenizerError) -> DurationToken? {
+        let start = i
         var digits = ""
         while i < chars.count, chars[i].isNumber {
             digits.append(chars[i])
             i += 1
         }
-        guard let value = Int(digits) else { return nil }
+        guard !digits.isEmpty else { return nil }
+        guard let value = Int(digits) else {
+            let (line, column) = location(of: start, in: chars)
+            throw TokenizerError.malformedNumber(line: line, column: column)
+        }
         var dots = 0
         while i < chars.count, chars[i] == "." {
             dots += 1

@@ -27,6 +27,17 @@ struct TokenizeErrorsTests {
         }
     }
 
+    @Test("delivers a typed error on a number too large to read", .tags(.unit))
+    func oversizedNumber() throws {
+        let sut = makeSUT()
+        #expect(throws: TokenizerError.malformedNumber(line: 1, column: 2)) {
+            try sut.tokenize("c99999999999999999999999")
+        }
+        #expect(throws: TokenizerError.malformedNumber(line: 1, column: 1)) {
+            try sut.tokenize("99999999999999999999999")
+        }
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> Tokenizer { Tokenizer() }
