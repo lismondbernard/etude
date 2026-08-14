@@ -31,11 +31,19 @@ public struct NoteToken: Equatable, Sendable {
     public let name: String
     /// Net octave adjustment: +1 per `'`, −1 per `,`.
     public let octaveMarks: Int
+    /// A trailing `!` — the engraver's cautionary/forced accidental.
+    public let forcedAccidental: Bool
     public let duration: DurationToken?
 
-    public init(name: String, octaveMarks: Int = 0, duration: DurationToken? = nil) {
+    public init(
+        name: String,
+        octaveMarks: Int = 0,
+        forcedAccidental: Bool = false,
+        duration: DurationToken? = nil
+    ) {
         self.name = name
         self.octaveMarks = octaveMarks
+        self.forcedAccidental = forcedAccidental
         self.duration = duration
     }
 }
@@ -118,8 +126,18 @@ public struct Tokenizer: Sendable {
                     octaveMarks += chars[i] == "'" ? 1 : -1
                     i += 1
                 }
+                var forced = false
+                if i < chars.count, chars[i] == "!" {
+                    forced = true
+                    i += 1
+                }
                 let duration = scanDuration(chars, &i)
-                tokens.append(.note(NoteToken(name: name, octaveMarks: octaveMarks, duration: duration)))
+                tokens.append(.note(NoteToken(
+                    name: name,
+                    octaveMarks: octaveMarks,
+                    forcedAccidental: forced,
+                    duration: duration
+                )))
                 continue
             }
             if c == "\\" {

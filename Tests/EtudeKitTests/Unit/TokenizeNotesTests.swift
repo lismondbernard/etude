@@ -76,6 +76,15 @@ struct TokenizeNotesTests {
         #expect(try sut.tokenize("Voice{") == [.identifier("Voice"), .braceOpen])
     }
 
+    @Test("tokenizes a forced-accidental mark on the note", .tags(.unit))
+    func forcedAccidental() throws {
+        let sut = makeSUT()
+        // Verbatim shape from the Gnossienne: `b!2`
+        #expect(try sut.tokenize("b!2") == [
+            .note(NoteToken(name: "b", forcedAccidental: true, duration: DurationToken(2))),
+        ])
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> Tokenizer { Tokenizer() }
