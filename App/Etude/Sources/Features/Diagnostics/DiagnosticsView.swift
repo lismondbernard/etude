@@ -1,17 +1,30 @@
 import SwiftUI
 import EtudeKit
 
-/// Diagnostics (PLAN.md §8, screen 3): after a build, render the Validator's findings —
-/// all green for the six clean pieces, and Clair de Lune's alignment failure shown
-/// honestly (ADR-0001, ADR-0003). The app is as candid in its UI as the tests are.
-/// Stubbed in Phase 0; wired to the Validator in Phase 5.
+/// Diagnostics (PLAN.md §8, screen 3): the Validator's findings, rendered as
+/// candidly in the UI as in the tests. Clean pieces show their green seal;
+/// Clair de Lune shows its register drift (ADR-0001, ADR-0003).
 struct DiagnosticsView: View {
+    let findings: [ValidationFinding]
+
     var body: some View {
-        ContentUnavailableView(
-            "No diagnostics yet",
-            systemImage: "checklist",
-            description: Text("Validator findings appear here after a build (Phase 5).")
-        )
+        List {
+            Section {
+                Label(DiagnosticsPresenter.summary(for: findings),
+                      systemImage: findings.isEmpty ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
+                    .foregroundStyle(findings.isEmpty ? .green : .orange)
+                    .accessibilityIdentifier("diagnostics.summary")
+            }
+            if !findings.isEmpty {
+                Section("Findings") {
+                    ForEach(Array(findings.enumerated()), id: \.offset) { index, finding in
+                        Text(DiagnosticsPresenter.line(for: finding))
+                            .accessibilityIdentifier("diagnostics.finding.\(index)")
+                    }
+                }
+            }
+        }
+        .navigationTitle("Diagnostics")
         .accessibilityIdentifier("diagnostics.screen")
     }
 }
