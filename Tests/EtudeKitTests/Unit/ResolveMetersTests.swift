@@ -39,6 +39,18 @@ struct ResolveMetersTests {
         #expect(resolved.tempo == TempoMark(label: "Lent", beatUnit: 4, beatsPerMinute: 66))
     }
 
+    @Test("the first tempo mark governs the piece", .tags(.unit))
+    func firstTempoGoverns() throws {
+        // Clair de Lune writes "Andante très expressif" at the top and
+        // "a Tempo 1º" mid-piece; the piece's tempo is the opening one.
+        let resolved = try makeSUT().resolve([
+            .tempo(label: "Andante", beatUnit: nil, beatsPerMinute: nil),
+            note("c", dur(4)),
+            .tempo(label: "a Tempo", beatUnit: nil, beatsPerMinute: nil),
+        ])
+        #expect(resolved.tempo == TempoMark(label: "Andante", beatUnit: nil, beatsPerMinute: nil))
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> Resolver { Resolver() }

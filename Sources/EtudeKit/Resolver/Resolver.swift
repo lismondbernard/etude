@@ -245,7 +245,9 @@ public struct Resolver: Sendable {
             case .meter(let beats, let beatUnit):
                 state.meter = Meter(beats: beats, beatUnit: beatUnit)
             case .tempo(let label, let beatUnit, let beatsPerMinute):
-                state.tempo = TempoMark(
+                // The opening mark names the piece's tempo; later marks are
+                // interpretation (single-tempo engine).
+                state.tempo = state.tempo ?? TempoMark(
                     label: label, beatUnit: beatUnit, beatsPerMinute: beatsPerMinute)
             case .reference(let name):
                 guard let definition = state.definitions[name] else {
