@@ -21,7 +21,7 @@ public enum ResolveError: Error, Equatable, Sendable {
 }
 
 /// A captured time signature.
-public struct Meter: Equatable, Sendable {
+public struct Meter: Equatable, Sendable, Codable {
     public let beats: Int
     public let beatUnit: Int
 
@@ -37,7 +37,7 @@ public struct Meter: Equatable, Sendable {
 }
 
 /// A captured tempo mark.
-public struct TempoMark: Equatable, Sendable {
+public struct TempoMark: Equatable, Sendable, Codable {
     public let label: String?
     public let beatUnit: Int?
     public let beatsPerMinute: Int?

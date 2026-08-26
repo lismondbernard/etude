@@ -1,18 +1,113 @@
-// Model + Validator — `Score` value types, invariants as first-class code
-// (implemented in Phase 3)
+// Model — `Score` value types + assembly   (Phase 3, built test-first)
 //
-// Planned value types:
-//   Score { title, tempo, timeSignature, voices: [Voice] }
-//   Voice { name, events: [NoteEvent] }
-//   NoteEvent { pitch: MIDINote(UInt8 0…127), startTick, durationTicks, velocity }
-//
-// The Validator runs invariants (each independently unit-tested) and THROWS
-// structured findings rather than clamping (ADR-0001 — clamping hid BUG-004):
-//   1. Voice alignment — simultaneous voices sum to equal tick length per section
-//      (this is the check that exposes Clair de Lune's 91/46/57/54-beat mismatch).
-//   2. Register sanity — per-track min/max pitch in a plausible range; octave-0/8
-//      artifacts are parser bugs, not music (BUG-004/006).
-//   3. Opening-phrase fingerprint — corpus pieces carry expected first-notes.
-//   4. Bar arithmetic — events in each bar sum to the time signature.
+// The domain model speaks the musician's vocabulary: voices, ticks, MIDI
+// pitches. Zero LilyPond concepts survive here (§0.4) — a future MusicXML
+// front end must require no change to these types. Value types on purpose
+// (ADR-0002). Invariants live in the Validator, which THROWS rather than
+// clamps (ADR-0001).
 
-// Intentionally empty in Phase 0.
+/// One sounding note as performed: MIDI pitch, absolute ticks, velocity.
+public struct NoteEvent: Equatable, Sendable, Codable {
+    public let pitch: UInt8
+    public let startTick: Int
+    public let durationTicks: Int
+    public let velocity: UInt8
+
+    public init(pitch: UInt8, startTick: Int, durationTicks: Int, velocity: UInt8) {
+        self.pitch = pitch
+        self.startTick = startTick
+        self.durationTicks = durationTicks
+        self.velocity = velocity
+    }
+}
+
+/// One performed line. `totalTicks` is the full span including trailing
+/// silence — alignment between voices is about spans, not last notes.
+public struct Voice: Equatable, Sendable, Codable {
+    public let name: String
+    public let events: [NoteEvent]
+    public let totalTicks: Int
+
+    public init(name: String, events: [NoteEvent], totalTicks: Int) {
+        self.name = name
+        self.events = events
+        self.totalTicks = totalTicks
+    }
+}
+
+/// A complete piece, ready for validation and MIDI emission.
+public struct Score: Equatable, Sendable, Codable {
+    public let title: String
+    public let tempo: TempoMark?
+    public let meter: Meter?
+    public let voices: [Voice]
+
+    public init(title: String, tempo: TempoMark?, meter: Meter?, voices: [Voice]) {
+        self.title = title
+        self.tempo = tempo
+        self.meter = meter
+        self.voices = voices
+    }
+}
+
+/// A structural failure while assembling a `Score` from a parsed file.
+public enum ScoreBuildError: Error, Equatable, Sendable {
+    case missingScoreBlock
+    /// The resolver placed a pitch no MIDI byte can hold. In-range-but-absurd
+    /// registers are the Validator's finer judgement; this is the hard floor.
+    case pitchOutOfMIDIRange(voice: String, midi: Int)
+    case resolveFailed(String, ResolveError)
+}
+
+/// Maps a parsed file to the domain model: walks the `\score` assembly,
+/// resolves each referenced voice, and stamps velocities.
+public struct ScoreBuilder: Sendable {
+    public init() {}
+
+    public func score(
+        from file: LilyFile,
+        velocities: [String: UInt8] = [:],
+        defaultVelocity: UInt8 = 80
+    ) throws(ScoreBuildError) -> Score {
+        guard let scoreBlock = file.score else { throw ScoreBuildError.missingScoreBlock }
+
+        var voices: [Voice] = []
+        var meter: Meter?
+        var tempo: TempoMark?
+        for name in voiceReferences(in: scoreBlock) {
+            let resolved: ResolvedMusic
+            do {
+                resolved = try Resolver().resolve(
+                    [.reference(name)], definitions: file.definitions)
+            } catch {
+                throw ScoreBuildError.resolveFailed(name, error)
+            }
+            let velocity = velocities[name] ?? defaultVelocity
+            var events: [NoteEvent] = []
+            for note in resolved.notes {
+                guard let pitch = UInt8(exactly: note.midiNote), pitch <= 127 else {
+                    throw ScoreBuildError.pitchOutOfMIDIRange(voice: name, midi: note.midiNote)
+                }
+                events.append(NoteEvent(
+                    pitch: pitch, startTick: note.startTick,
+                    durationTicks: note.durationTicks, velocity: velocity))
+            }
+            voices.append(Voice(name: name, events: events, totalTicks: resolved.totalTicks))
+            meter = meter ?? resolved.meter
+            tempo = tempo ?? resolved.tempo
+        }
+        return Score(
+            title: file.header["title"] ?? "", tempo: tempo, meter: meter, voices: voices)
+    }
+
+    /// The referenced definitions inside the score assembly, in reading order.
+    private func voiceReferences(in node: MusicNode) -> [String] {
+        switch node {
+        case .reference(let name): [name]
+        case .context(_, let body): voiceReferences(in: body)
+        case .parallel(let children), .sequence(let children):
+            children.flatMap(voiceReferences(in:))
+        default: []
+        }
+    }
+}
