@@ -42,6 +42,26 @@ struct ParseFileStructureTests {
         }
     }
 
+    @Test("parses the score block's staff assembly", .tags(.unit))
+    func scoreBlock() throws {
+        // Verbatim shape from the Gymnopédie.
+        let file = try makeSUT().parseFile(tokens("""
+            melody = { c }
+            \\score { << \\new Staff \\melody \\new Staff << \\new Voice \\bass >> >> }
+            """))
+        #expect(file.score == .parallel([
+            .context(type: "Staff", body: .reference("melody")),
+            .context(type: "Staff", body: .parallel([
+                .context(type: "Voice", body: .reference("bass")),
+            ])),
+        ]))
+    }
+
+    @Test("a file with no score block has a nil score", .tags(.unit))
+    func fileWithoutScore() throws {
+        #expect(try makeSUT().parseFile(tokens("theme = { c }")).score == nil)
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> Parser { Parser() }

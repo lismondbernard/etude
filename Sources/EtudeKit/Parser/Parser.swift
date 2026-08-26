@@ -58,10 +58,18 @@ public indirect enum MusicNode: Equatable, Sendable {
 public struct LilyFile: Equatable, Sendable {
     public let header: [String: String]
     public let definitions: [String: MusicNode]
+    /// The `\score` assembly — staves and voices, usually referencing the
+    /// named definitions. `nil` when the file only defines material.
+    public let score: MusicNode?
 
-    public init(header: [String: String] = [:], definitions: [String: MusicNode]) {
+    public init(
+        header: [String: String] = [:],
+        definitions: [String: MusicNode],
+        score: MusicNode? = nil
+    ) {
         self.header = header
         self.definitions = definitions
+        self.score = score
     }
 }
 
@@ -74,12 +82,17 @@ public struct Parser: Sendable {
     public func parseFile(_ tokens: [Token]) throws(ParseError) -> LilyFile {
         var header: [String: String] = [:]
         var definitions: [String: MusicNode] = [:]
+        var score: MusicNode?
         var i = 0
         while i < tokens.count {
             switch tokens[i] {
             case .command("header"):
                 i += 1
                 header = try parseHeaderBlock(tokens, &i)
+            case .command("score"):
+                i += 1
+                let body = try parseBracedBody(tokens, &i)
+                score = body.count == 1 ? body[0] : .sequence(body)
             case .identifier(let name) where i + 1 < tokens.count && tokens[i + 1] == .equals:
                 i += 2
                 definitions[name] = try parseExpression(tokens, &i)
@@ -92,7 +105,7 @@ public struct Parser: Sendable {
                 throw ParseError.unexpectedToken(tokens[i], index: i)
             }
         }
-        return LilyFile(header: header, definitions: definitions)
+        return LilyFile(header: header, definitions: definitions, score: score)
     }
 
     /// Consumes `{ field = "value" … }` — the metadata block.
