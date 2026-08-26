@@ -32,6 +32,19 @@ struct BuildCorpusPiecesTests {
         try Validator().validate(score, expectedOpening: [78, 83, 79, 78, 76])
     }
 
+    @Test("the Winter Largo builds all five string parts", .tags(.acceptance))
+    func winterLargo() throws {
+        let score = try buildPiece("winter-largo.ly")
+
+        #expect(score.title == "Winter (Largo)")
+        #expect(score.voices.map(\.name) == ["solo", "violinOne", "violinTwo", "viola", "cello"])
+        #expect(score.tempo?.beatsPerMinute == 52)
+        // 18 bars of 4/4, every part.
+        #expect(score.voices.map(\.totalTicks) == Array(repeating: 34560, count: 5))
+        // The E-flat major solo entrance.
+        try Validator().validate(score, expectedOpening: [75, 82, 80, 79, 77, 75])
+    }
+
     // MARK: - Helpers
 
     /// The whole pipeline up to a validated, assembled score.
