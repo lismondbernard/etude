@@ -54,6 +54,14 @@ struct ParseRepeatsTests {
         }
     }
 
+    @Test("accepts the older quoted repeat style", .tags(.unit))
+    func quotedStyle() throws {
+        // Verbatim shape from the Minuet source: `\repeat "volta" 2 { … }`
+        #expect(try makeSUT().parseMusic(tokens("\\repeat \"volta\" 2 { c }")) == [
+            .repeated(.volta, count: 2, body: [note("c")], alternatives: []),
+        ])
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> Parser { Parser() }

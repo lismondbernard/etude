@@ -309,8 +309,14 @@ public struct Parser: Sendable {
         case "repeat":
             i += 1
             guard i < tokens.count else { throw ParseError.unexpectedEndOfInput }
-            guard case .identifier(let styleWord) = tokens[i],
-                  let style = RepeatStyle(rawValue: styleWord) else {
+            // The style word may be bare (`volta`) or, in older sources,
+            // quoted (`"volta"`).
+            let styleWord: String? = switch tokens[i] {
+            case .identifier(let word): word
+            case .string(let word): word
+            default: nil
+            }
+            guard let styleWord, let style = RepeatStyle(rawValue: styleWord) else {
                 throw ParseError.unexpectedToken(tokens[i], index: i)
             }
             i += 1
