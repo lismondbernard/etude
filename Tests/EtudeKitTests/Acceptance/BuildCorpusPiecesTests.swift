@@ -45,6 +45,18 @@ struct BuildCorpusPiecesTests {
         try Validator().validate(score, expectedOpening: [75, 82, 80, 79, 77, 75])
     }
 
+    @Test("the Prelude builds its 34 bars of figuration", .tags(.acceptance))
+    func prelude() throws {
+        let score = try buildPiece("prelude-in-c.ly")
+
+        #expect(score.title == "Prelude in C major")
+        #expect(score.voices.map(\.name) == ["figuration", "tenor", "bass"])
+        #expect(score.tempo?.beatsPerMinute == 72)
+        #expect(score.voices.map(\.totalTicks) == [65280, 65280, 65280])
+        // The broken C-major figure: G4 C5 E5, twice.
+        try Validator().validate(score, expectedOpening: [67, 72, 76, 67, 72, 76])
+    }
+
     // MARK: - Helpers
 
     /// The whole pipeline up to a validated, assembled score.
