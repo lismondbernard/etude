@@ -57,6 +57,31 @@ struct ScoreAssemblyTests {
         }
     }
 
+    @Test("assembles explicitly named voices when a file has no score block", .tags(.unit))
+    func namedVoices() throws {
+        // Clair de Lune's vendored source defines its four voices but carries
+        // no score assembly.
+        let file = try Parser().parseFile(Tokenizer().tokenize(
+            "melody = { c4 } bass = { e,4 }"))
+        let score = try makeSUT().score(
+            from: file, voices: ["melody", "bass"], title: "Nameless")
+
+        #expect(score.title == "Nameless")
+        #expect(score.voices.map(\.name) == ["melody", "bass"])
+        #expect(score.voices.map(\.totalTicks) == [480, 480])
+    }
+
+    @Test("assumes a tempo when the mark has no metronome number", .tags(.unit))
+    func assumedTempo() throws {
+        // Clair's `\tempo"Andante très expressif"` names a feel, not a number.
+        let file = try Parser().parseFile(Tokenizer().tokenize(
+            "melody = { \tempo \"Andante\" c4 }"))
+        let score = try makeSUT().score(
+            from: file, voices: ["melody"], title: "", assumingBeatsPerMinute: 60)
+
+        #expect(score.tempo == TempoMark(label: "Andante", beatUnit: 4, beatsPerMinute: 60))
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> ScoreBuilder { ScoreBuilder() }

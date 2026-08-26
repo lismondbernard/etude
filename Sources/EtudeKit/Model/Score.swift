@@ -70,11 +70,28 @@ public struct ScoreBuilder: Sendable {
         defaultVelocity: UInt8 = 80
     ) throws(ScoreBuildError) -> Score {
         guard let scoreBlock = file.score else { throw ScoreBuildError.missingScoreBlock }
+        return try score(
+            from: file, voices: voiceReferences(in: scoreBlock),
+            title: file.header["title"] ?? "",
+            velocities: velocities, defaultVelocity: defaultVelocity)
+    }
 
+    /// Assembles explicitly named voices — for sources that define their
+    /// voices but carry no `\score` assembly (Clair de Lune). When the
+    /// resolved tempo names a feel without a metronome number,
+    /// `assumingBeatsPerMinute` supplies one.
+    public func score(
+        from file: LilyFile,
+        voices names: [String],
+        title: String,
+        velocities: [String: UInt8] = [:],
+        defaultVelocity: UInt8 = 80,
+        assumingBeatsPerMinute: Int? = nil
+    ) throws(ScoreBuildError) -> Score {
         var voices: [Voice] = []
         var meter: Meter?
         var tempo: TempoMark?
-        for name in voiceReferences(in: scoreBlock) {
+        for name in names {
             let resolved: ResolvedMusic
             do {
                 resolved = try Resolver().resolve(
@@ -96,8 +113,10 @@ public struct ScoreBuilder: Sendable {
             meter = meter ?? resolved.meter
             tempo = tempo ?? resolved.tempo
         }
-        return Score(
-            title: file.header["title"] ?? "", tempo: tempo, meter: meter, voices: voices)
+        if let assumed = assumingBeatsPerMinute, tempo?.beatsPerMinute == nil {
+            tempo = TempoMark(label: tempo?.label, beatUnit: 4, beatsPerMinute: assumed)
+        }
+        return Score(title: title, tempo: tempo, meter: meter, voices: voices)
     }
 
     /// The referenced definitions inside the score assembly, in reading order.
