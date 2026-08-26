@@ -18,6 +18,11 @@ targets:
     platform: iOS
     sources:
       - path: Sources
+      # The vendored corpus rides in the bundle for BundledCorpus (§0.3).
+      - path: ../../Corpus
+        buildPhase: resources
+        includes: ["*.ly"]
+        excludes: ["*.expanded.ly"]
     dependencies:
       - package: EtudeKit
     settings:
@@ -33,6 +38,21 @@ targets:
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
         SWIFT_STRICT_CONCURRENCY: complete
+        GENERATE_INFOPLIST_FILE: YES
+
+  EtudeTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: EtudeTests
+    dependencies:
+      - target: Etude
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.silentspice.etude.tests
+        SWIFT_VERSION: "6.0"
+        DEVELOPMENT_TEAM: QA8F432V3V
+        CODE_SIGN_STYLE: Automatic
         GENERATE_INFOPLIST_FILE: YES
 
   EtudeUITests:
@@ -55,7 +75,9 @@ schemes:
     build:
       targets:
         Etude: all
+        EtudeTests: [test]
         EtudeUITests: [test]
     test:
       targets:
+        - EtudeTests
         - EtudeUITests
