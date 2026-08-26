@@ -20,6 +20,35 @@ public enum ResolveError: Error, Equatable, Sendable {
     case unsupportedNode(String)
 }
 
+/// A captured time signature.
+public struct Meter: Equatable, Sendable {
+    public let beats: Int
+    public let beatUnit: Int
+
+    public init(beats: Int, beatUnit: Int) {
+        self.beats = beats
+        self.beatUnit = beatUnit
+    }
+
+    /// One bar's length in ticks.
+    public var barTicks: Int {
+        beats * ResolvedMusic.ticksPerQuarter * 4 / beatUnit
+    }
+}
+
+/// A captured tempo mark.
+public struct TempoMark: Equatable, Sendable {
+    public let label: String?
+    public let beatUnit: Int?
+    public let beatsPerMinute: Int?
+
+    public init(label: String?, beatUnit: Int?, beatsPerMinute: Int?) {
+        self.label = label
+        self.beatUnit = beatUnit
+        self.beatsPerMinute = beatsPerMinute
+    }
+}
+
 /// One sounding note, absolutely placed in time. 480 ticks per quarter.
 public struct ResolvedNote: Equatable, Sendable {
     public let midiNote: Int
@@ -40,10 +69,21 @@ public struct ResolvedMusic: Equatable, Sendable {
     public let notes: [ResolvedNote]
     /// Total performed span, trailing rests included.
     public let totalTicks: Int
+    public let meter: Meter?
+    public let tempo: TempoMark?
 
-    public init(notes: [ResolvedNote], totalTicks: Int) {
+    public init(notes: [ResolvedNote], totalTicks: Int, meter: Meter? = nil, tempo: TempoMark? = nil) {
         self.notes = notes
         self.totalTicks = totalTicks
+        self.meter = meter
+        self.tempo = tempo
+    }
+
+    /// Bars performed under the captured meter, a partial final bar counting
+    /// whole. `nil` without a meter.
+    public var barCount: Int? {
+        guard let meter, totalTicks > 0 else { return meter.map { _ in 0 } }
+        return (totalTicks + meter.barTicks - 1) / meter.barTicks
     }
 }
 
@@ -58,7 +98,9 @@ public struct Resolver: Sendable {
         var state = State()
         state.definitions = definitions
         try resolveSequence(music, into: &state)
-        return ResolvedMusic(notes: state.notes, totalTicks: state.tick)
+        return ResolvedMusic(
+            notes: state.notes, totalTicks: state.tick,
+            meter: state.meter, tempo: state.tempo)
     }
 
     /// Mutable walk state, threaded through the whole resolution in source
@@ -100,6 +142,8 @@ public struct Resolver: Sendable {
         /// the debt they are creating.
         var inGraceBody = false
 
+        var meter: Meter?
+        var tempo: TempoMark?
         /// Named definitions a `.reference` may inline.
         var definitions: [String: MusicNode] = [:]
         /// The tuplet scale in force, as a fraction (numerator, denominator).
@@ -158,6 +202,11 @@ public struct Resolver: Sendable {
                 }
                 state.pendingTies = next
                 state.tick += ticks
+            case .meter(let beats, let beatUnit):
+                state.meter = Meter(beats: beats, beatUnit: beatUnit)
+            case .tempo(let label, let beatUnit, let beatsPerMinute):
+                state.tempo = TempoMark(
+                    label: label, beatUnit: beatUnit, beatsPerMinute: beatsPerMinute)
             case .reference(let name):
                 guard let definition = state.definitions[name] else {
                     throw ResolveError.unknownReference(name)
