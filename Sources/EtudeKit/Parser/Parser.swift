@@ -18,6 +18,8 @@ public enum ParseError: Error, Equatable, Sendable {
 public indirect enum MusicNode: Equatable, Sendable {
     case note(NoteToken, tied: Bool)
     case rest(RestToken)
+    case chord([NoteToken], duration: DurationToken?, tied: Bool)
+    case chordRepeat(duration: DurationToken?)
 }
 
 /// Recursive-descent parser over the tokenizer's stream. Stateless between
@@ -39,11 +41,34 @@ public struct Parser: Sendable {
                 i += 1
             case .tie:
                 // A tie is not an event of its own — it marks the preceding
-                // note as sustained into the next.
-                guard case .note(let noteToken, _) = nodes.last else {
+                // note or chord as sustained into the next.
+                switch nodes.last {
+                case .note(let noteToken, _):
+                    nodes[nodes.count - 1] = .note(noteToken, tied: true)
+                case .chord(let pitches, let duration, _):
+                    nodes[nodes.count - 1] = .chord(pitches, duration: duration, tied: true)
+                default:
                     throw ParseError.unexpectedToken(.tie, index: i)
                 }
-                nodes[nodes.count - 1] = .note(noteToken, tied: true)
+                i += 1
+            case .chordStart:
+                i += 1
+                var pitches: [NoteToken] = []
+                scan: while i < tokens.count {
+                    switch tokens[i] {
+                    case .note(let pitch):
+                        pitches.append(pitch)
+                        i += 1
+                    case .chordEnd(let duration):
+                        nodes.append(.chord(pitches, duration: duration, tied: false))
+                        i += 1
+                        break scan
+                    default:
+                        throw ParseError.unexpectedToken(tokens[i], index: i)
+                    }
+                }
+            case .chordRepeat(let duration):
+                nodes.append(.chordRepeat(duration: duration))
                 i += 1
             default:
                 throw ParseError.unexpectedToken(tokens[i], index: i)
