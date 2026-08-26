@@ -13,6 +13,14 @@ public enum ParseError: Error, Equatable, Sendable {
     case unexpectedEndOfInput
 }
 
+/// A performed ornament, attached to the note before it.
+public enum OrnamentKind: String, Equatable, Sendable, Codable {
+    /// A dip to the lower scale neighbor and back.
+    case mordent
+    /// A flick to the upper scale neighbor and back.
+    case prall
+}
+
 /// A key signature's mode.
 public enum KeyMode: String, Equatable, Sendable, Codable {
     case major, minor
@@ -48,6 +56,7 @@ public indirect enum MusicNode: Equatable, Sendable, Codable {
     case pitchedRest(NoteToken)
     case meter(beats: Int, beatUnit: Int)
     case key(root: NoteToken, mode: KeyMode)
+    case ornament(OrnamentKind)
     case tempo(label: String?, beatUnit: Int?, beatsPerMinute: Int?)
     /// A use of a named definition (`\themeOneMelody`). Unresolved here —
     /// binding it to its definition is the Resolver's job, so an unknown name
@@ -296,6 +305,9 @@ public struct Parser: Sendable {
                 return .grace([.note(pitch, tied: false)], acciaccatura: name == "acciaccatura")
             }
             return .grace(try parseBracedBody(tokens, &i), acciaccatura: name == "acciaccatura")
+        case "mordent", "prall":
+            i += 1
+            return .ornament(OrnamentKind(rawValue: name)!)
         case "key":
             i += 1
             guard i < tokens.count else { throw ParseError.unexpectedEndOfInput }
@@ -397,6 +409,9 @@ public struct Parser: Sendable {
         "tieUp", "tieDown", "tieNeutral",
         "slurUp", "slurDown", "phrasingSlurUp", "phrasingSlurDown",
         "dynamicUp", "dynamicDown", "break", "pageBreak", "noBreak",
+        // A trill plays plain in this engine (the prototype's reading, baked
+        // into the golden fixtures); mordent and prall ARE performed.
+        "trill",
     ]
 
     /// Consumes an `n/d` fraction.
