@@ -22,8 +22,8 @@ struct WriteSMFHeaderTests {
             meter: Meter(beats: 3, beatUnit: 4),
             tempo: TempoMark(label: "Lent", beatUnit: 4, beatsPerMinute: 66)))
         // Track 0: 66 bpm = 909_090 µs/quarter; 3/4 = 3, 2^2, 24 clocks, 8.
-        #expect(Array(bytes[14..<43]) == [
-            0x4D, 0x54, 0x72, 0x6B, 0, 0, 0, 21,           // MTrk, length
+        #expect(Array(bytes[14..<41]) == [
+            0x4D, 0x54, 0x72, 0x6B, 0, 0, 0, 19,           // MTrk, length
             0, 0xFF, 0x51, 3, 0x0D, 0xDF, 0x22,            // tempo
             0, 0xFF, 0x58, 4, 3, 2, 24, 8,                 // time signature
             0, 0xFF, 0x2F, 0,                              // end of track
@@ -33,8 +33,8 @@ struct WriteSMFHeaderTests {
     @Test("without tempo or meter the meta track defaults to 120 in common time", .tags(.unit))
     func defaults() throws {
         let bytes = makeSUT().bytes(for: score([voice("melody", pitches: [60])]))
-        #expect(Array(bytes[14..<43]) == [
-            0x4D, 0x54, 0x72, 0x6B, 0, 0, 0, 21,
+        #expect(Array(bytes[14..<41]) == [
+            0x4D, 0x54, 0x72, 0x6B, 0, 0, 0, 19,
             0, 0xFF, 0x51, 3, 0x07, 0xA1, 0x20,            // 500_000 µs = 120 bpm
             0, 0xFF, 0x58, 4, 4, 2, 24, 8,
             0, 0xFF, 0x2F, 0,
