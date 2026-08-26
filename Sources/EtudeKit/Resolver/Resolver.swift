@@ -136,6 +136,14 @@ public struct Resolver: Sendable {
                 }
                 state.pendingTies = next
                 state.tick += ticks
+            case .sequence(let body):
+                // Pure grouping (bare braces, crossStaff): time and context
+                // flow straight through (BUG-003).
+                try resolveSequence(body, into: &state)
+            case .context(_, let body):
+                // Staff/voice assembly matters when a score is built; inside a
+                // music line the wrapper is transparent.
+                try resolveSequence([body], into: &state)
             case .pitchedRest(let noteToken):
                 // Placed like its written pitch — threading the relative
                 // context — but nothing sounds.
