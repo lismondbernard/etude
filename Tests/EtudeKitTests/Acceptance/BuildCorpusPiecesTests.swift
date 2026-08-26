@@ -19,6 +19,19 @@ struct BuildCorpusPiecesTests {
         try Validator().validate(score, expectedOpening: [74, 67, 69, 71, 72])
     }
 
+    @Test("the Air builds its 18 performed bars", .tags(.acceptance))
+    func air() throws {
+        let score = try buildPiece("air-on-the-g-string.ly")
+
+        #expect(score.title == "Air on the G String")
+        // Flute + guitar-upper only; the edition's bass has a 1-bar repeat
+        // mismatch and is deliberately omitted (PLAN.md §5).
+        #expect(score.voices.map(\.name) == ["melody", "accompaniment"])
+        #expect(score.voices.map(\.totalTicks) == [34560, 34560])
+        // The long F#5 (a tied whole + eighth), then the turn through B5.
+        try Validator().validate(score, expectedOpening: [78, 83, 79, 78, 76])
+    }
+
     // MARK: - Helpers
 
     /// The whole pipeline up to a validated, assembled score.
