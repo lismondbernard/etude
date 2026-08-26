@@ -7,6 +7,8 @@
 //
 // `\crossStaff { … }` braces are grouping no-ops, NOT parallel separators (BUG-003).
 
+import Foundation
+
 /// A syntactic error, carrying the offending token and its stream index.
 public enum ParseError: Error, Equatable, Sendable {
     case unexpectedToken(Token, index: Int)
@@ -120,6 +122,34 @@ public struct Parser: Sendable {
                 i += 1
                 if i < tokens.count, case .string = tokens[i] {
                     i += 1
+                }
+            case .command("parallelMusic"):
+                i += 1
+                guard i < tokens.count, case .scheme(let list) = tokens[i] else {
+                    throw ParseError.unexpectedToken(
+                        i < tokens.count ? tokens[i] : .command("parallelMusic"), index: i)
+                }
+                let names = list
+                    .trimmingCharacters(in: CharacterSet(charactersIn: "'()"))
+                    .split(separator: " ")
+                    .map(String.init)
+                i += 1
+                guard i < tokens.count, tokens[i] == .braceOpen else {
+                    throw ParseError.unexpectedToken(
+                        i < tokens.count ? tokens[i] : .braceOpen, index: i)
+                }
+                i += 1
+                var body: [Token] = []
+                var depth = 1
+                while i < tokens.count, depth > 0 {
+                    if tokens[i] == .braceOpen { depth += 1 }
+                    if tokens[i] == .braceClose { depth -= 1 }
+                    if depth > 0 { body.append(tokens[i]) }
+                    i += 1
+                }
+                guard depth == 0 else { throw ParseError.unexpectedEndOfInput }
+                for (name, voice) in try ParallelMusicExpander().expand(names: names, body: body) {
+                    definitions[name] = substitute(definitions, in: voice)
                 }
             default:
                 throw ParseError.unexpectedToken(tokens[i], index: i)
@@ -375,6 +405,11 @@ public struct Parser: Sendable {
             if i < tokens.count, case .note(let pitch) = tokens[i] {
                 anchor = pitch
                 i += 1
+            }
+            // The body is a braced group — or, as in Clair de Lune's
+            // `\relative c' \rhUpRed`, a single referenced expression.
+            if i < tokens.count, case .command = tokens[i] {
+                return .relative(anchor: anchor, body: [try parseExpression(tokens, &i)])
             }
             return .relative(anchor: anchor, body: try parseBracedBody(tokens, &i))
         case "times", "tuplet":
