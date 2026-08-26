@@ -20,6 +20,31 @@ struct ParseNoteSequencesTests {
         ])
     }
 
+    @Test("attaches a tie to the preceding note", .tags(.unit))
+    func tieAttachesToPrecedingNote() throws {
+        #expect(try makeSUT().parseMusic(tokens("fis2.~ fis2. e")) == [
+            note("fis", dur(2, dots: 1), tied: true),
+            note("fis", dur(2, dots: 1)),
+            note("e"),
+        ])
+    }
+
+    @Test("a tie may be separated from its note by whitespace", .tags(.unit))
+    func detachedTie() throws {
+        // Verbatim shape from the Gnossienne: `f4 ~ f2 ~ | f1`
+        #expect(try makeSUT().parseMusic(tokens("f4 ~ f2")) == [
+            note("f", dur(4), tied: true),
+            note("f", dur(2)),
+        ])
+    }
+
+    @Test("delivers a typed error on a tie with no note before it", .tags(.unit))
+    func tieWithoutNote() throws {
+        #expect(throws: ParseError.unexpectedToken(.tie, index: 0)) {
+            try makeSUT().parseMusic(tokens("~ c"))
+        }
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> Parser { Parser() }

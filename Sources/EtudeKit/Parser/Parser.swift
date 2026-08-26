@@ -37,6 +37,14 @@ public struct Parser: Sendable {
             case .rest(let restToken):
                 nodes.append(.rest(restToken))
                 i += 1
+            case .tie:
+                // A tie is not an event of its own — it marks the preceding
+                // note as sustained into the next.
+                guard case .note(let noteToken, _) = nodes.last else {
+                    throw ParseError.unexpectedToken(.tie, index: i)
+                }
+                nodes[nodes.count - 1] = .note(noteToken, tied: true)
+                i += 1
             default:
                 throw ParseError.unexpectedToken(tokens[i], index: i)
             }
