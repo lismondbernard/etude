@@ -70,6 +70,24 @@ public struct Resolver: Sendable {
         var reference: (letter: Int, octave: Int)?
         /// The last chord's sounded pitches, for the `q` repeat.
         var lastChord: [Int]?
+        /// Open ties: sounding pitch → index of the event to extend when the
+        /// adjacent matching pitch arrives.
+        var pendingTies: [Int: Int] = [:]
+
+        /// Sounds `midi` for `ticks`, merging into an open tie on the same
+        /// pitch instead of re-attacking. Returns the event's index.
+        mutating func sound(_ midi: Int, ticks: Int, tiedOnward: Bool, into next: inout [Int: Int]) {
+            if let open = pendingTies[midi] {
+                notes[open] = ResolvedNote(
+                    midiNote: midi,
+                    startTick: notes[open].startTick,
+                    durationTicks: notes[open].durationTicks + ticks)
+                if tiedOnward { next[midi] = open }
+            } else {
+                notes.append(ResolvedNote(midiNote: midi, startTick: tick, durationTicks: ticks))
+                if tiedOnward { next[midi] = notes.count - 1 }
+            }
+        }
 
         mutating func ticks(for written: DurationToken?) -> Int {
             if let written { lastDuration = written }
@@ -82,16 +100,18 @@ public struct Resolver: Sendable {
     ) throws(ResolveError) {
         for node in music {
             switch node {
-            case .note(let noteToken, _):
+            case .note(let noteToken, let tied):
                 let midi = try midiNote(of: noteToken, in: &state)
                 let ticks = state.ticks(for: noteToken.duration)
-                state.notes.append(
-                    ResolvedNote(midiNote: midi, startTick: state.tick, durationTicks: ticks))
+                var next: [Int: Int] = [:]
+                state.sound(midi, ticks: ticks, tiedOnward: tied, into: &next)
+                state.pendingTies = next
                 state.tick += ticks
-            case .chord(let pitches, let duration, _):
+            case .chord(let pitches, let duration, let tied):
                 let ticks = state.ticks(for: duration)
                 var sounded: [Int] = []
                 var firstReference: (letter: Int, octave: Int)?
+                var next: [Int: Int] = [:]
                 for (index, pitch) in pitches.enumerated() {
                     // First note against the outer context; later notes within
                     // the chord; afterwards the context continues from the
@@ -99,9 +119,9 @@ public struct Resolver: Sendable {
                     let midi = try midiNote(of: pitch, in: &state)
                     if index == 0 { firstReference = state.reference }
                     sounded.append(midi)
-                    state.notes.append(
-                        ResolvedNote(midiNote: midi, startTick: state.tick, durationTicks: ticks))
+                    state.sound(midi, ticks: ticks, tiedOnward: tied, into: &next)
                 }
+                state.pendingTies = next
                 if let firstReference { state.reference = firstReference }
                 state.lastChord = sounded
                 state.tick += ticks
@@ -110,10 +130,11 @@ public struct Resolver: Sendable {
                     throw ResolveError.chordRepeatWithoutChord
                 }
                 let ticks = state.ticks(for: duration)
+                var next: [Int: Int] = [:]
                 for midi in chord {
-                    state.notes.append(
-                        ResolvedNote(midiNote: midi, startTick: state.tick, durationTicks: ticks))
+                    state.sound(midi, ticks: ticks, tiedOnward: false, into: &next)
                 }
+                state.pendingTies = next
                 state.tick += ticks
             case .pitchedRest(let noteToken):
                 // Placed like its written pitch — threading the relative
@@ -129,7 +150,8 @@ public struct Resolver: Sendable {
                 state.reference = outer
             case .rest(let restToken):
                 // Sounding, spacer, or multi-measure: performed identically —
-                // silence for the written span.
+                // silence for the written span. A tie cannot cross silence.
+                state.pendingTies = [:]
                 state.tick += state.ticks(for: restToken.duration)
             default:
                 throw ResolveError.unsupportedNode("\(node)")
