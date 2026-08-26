@@ -41,6 +41,8 @@ public indirect enum MusicNode: Equatable, Sendable {
     /// A note turned silent by `\rest`: placed (and octave-threaded) like the
     /// written pitch, but nothing sounds.
     case pitchedRest(NoteToken)
+    case meter(beats: Int, beatUnit: Int)
+    case tempo(label: String?, beatUnit: Int?, beatsPerMinute: Int?)
 }
 
 /// Recursive-descent parser over the tokenizer's stream. Stateless between
@@ -165,6 +167,32 @@ public struct Parser: Sendable {
         case "grace", "acciaccatura":
             i += 1
             return .grace(try parseBracedBody(tokens, &i), acciaccatura: name == "acciaccatura")
+        case "time":
+            i += 1
+            let (beats, unit) = try parseFraction(tokens, &i)
+            return .meter(beats: beats, beatUnit: unit)
+        case "tempo":
+            i += 1
+            var label: String?
+            if i < tokens.count, case .string(let text) = tokens[i] {
+                label = text
+                i += 1
+            }
+            // The `4 = 66` metronome mark is optional after a label.
+            guard i < tokens.count, case .number(let unit) = tokens[i] else {
+                return .tempo(label: label, beatUnit: nil, beatsPerMinute: nil)
+            }
+            i += 1
+            guard i < tokens.count, tokens[i] == .equals else {
+                throw ParseError.unexpectedToken(tokens[i - 1], index: i - 1)
+            }
+            i += 1
+            guard i < tokens.count else { throw ParseError.unexpectedEndOfInput }
+            guard case .number(let bpm) = tokens[i] else {
+                throw ParseError.unexpectedToken(tokens[i], index: i)
+            }
+            i += 1
+            return .tempo(label: label, beatUnit: unit, beatsPerMinute: bpm)
         case "repeat":
             i += 1
             guard i < tokens.count else { throw ParseError.unexpectedEndOfInput }
