@@ -89,9 +89,21 @@ public struct Resolver: Sendable {
             }
         }
 
+        /// Time stolen by a just-resolved grace group, owed by the next
+        /// timed event.
+        var graceDebt = 0
+        /// True while resolving a grace group's own notes, which never pay
+        /// the debt they are creating.
+        var inGraceBody = false
+
         mutating func ticks(for written: DurationToken?) -> Int {
             if let written { lastDuration = written }
-            return Resolver.ticks(of: lastDuration)
+            var ticks = Resolver.ticks(of: lastDuration)
+            if !inGraceBody {
+                ticks = max(ticks - graceDebt, 0)
+                graceDebt = 0
+            }
+            return ticks
         }
     }
 
@@ -136,6 +148,30 @@ public struct Resolver: Sendable {
                 }
                 state.pendingTies = next
                 state.tick += ticks
+            case .grace(let body, let acciaccatura):
+                // Grace notes steal their span from the note that follows: the
+                // group sounds first, the debt shortens the next event, and
+                // the bar total is preserved.
+                let firstEvent = state.notes.count
+                let start = state.tick
+                let wasInGraceBody = state.inGraceBody
+                state.inGraceBody = true
+                try resolveSequence(body, into: &state)
+                state.inGraceBody = wasInGraceBody
+                if acciaccatura {
+                    // Very short by definition: the whole group compresses to
+                    // a thirty-second, whatever it writes.
+                    let target = ResolvedMusic.ticksPerQuarter / 8
+                    let graced = state.notes.count - firstEvent
+                    for (offset, index) in (firstEvent..<state.notes.count).enumerated() {
+                        state.notes[index] = ResolvedNote(
+                            midiNote: state.notes[index].midiNote,
+                            startTick: start + offset * target / graced,
+                            durationTicks: target / graced)
+                    }
+                    state.tick = start + target
+                }
+                state.graceDebt += state.tick - start
             case .repeated(.volta, let count, let body, let alternatives):
                 // Performed form: the body plays `count` times, the endings
                 // covering the final passes. The body is resolved ONCE and
