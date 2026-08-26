@@ -23,6 +23,7 @@ public indirect enum MusicNode: Equatable, Sendable {
     case chordRepeat(duration: DurationToken?)
     case sequence([MusicNode])
     case parallel([MusicNode])
+    case relative(anchor: NoteToken?, body: [MusicNode])
 }
 
 /// Recursive-descent parser over the tokenizer's stream. Stateless between
@@ -98,11 +99,44 @@ public struct Parser: Sendable {
             case .chordRepeat(let duration):
                 nodes.append(.chordRepeat(duration: duration))
                 i += 1
+            case .command(let name):
+                nodes.append(try parseCommand(name, tokens, &i))
             default:
                 throw ParseError.unexpectedToken(tokens[i], index: i)
             }
         }
         guard terminator == nil else { throw ParseError.unexpectedEndOfInput }
         return nodes
+    }
+
+    /// Parses one `\command` and whatever arguments its form requires;
+    /// `i` sits on the command token on entry.
+    private func parseCommand(
+        _ name: String, _ tokens: [Token], _ i: inout Int
+    ) throws(ParseError) -> MusicNode {
+        switch name {
+        case "relative":
+            i += 1
+            var anchor: NoteToken?
+            if i < tokens.count, case .note(let pitch) = tokens[i] {
+                anchor = pitch
+                i += 1
+            }
+            return .relative(anchor: anchor, body: try parseBracedBody(tokens, &i))
+        default:
+            throw ParseError.unexpectedToken(.command(name), index: i)
+        }
+    }
+
+    /// Consumes a required `{ … }` group and returns its contents.
+    private func parseBracedBody(
+        _ tokens: [Token], _ i: inout Int
+    ) throws(ParseError) -> [MusicNode] {
+        guard i < tokens.count else { throw ParseError.unexpectedEndOfInput }
+        guard tokens[i] == .braceOpen else {
+            throw ParseError.unexpectedToken(tokens[i], index: i)
+        }
+        i += 1
+        return try parseSequence(tokens, &i, endingAt: .braceClose)
     }
 }
