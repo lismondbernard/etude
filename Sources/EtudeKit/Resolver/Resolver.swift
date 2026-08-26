@@ -96,9 +96,13 @@ public struct Resolver: Sendable {
         /// the debt they are creating.
         var inGraceBody = false
 
+        /// The tuplet scale in force, as a fraction (numerator, denominator).
+        var tupletScale = (numerator: 1, denominator: 1)
+
         mutating func ticks(for written: DurationToken?) -> Int {
             if let written { lastDuration = written }
             var ticks = Resolver.ticks(of: lastDuration)
+                * tupletScale.numerator / tupletScale.denominator
             if !inGraceBody {
                 ticks = max(ticks - graceDebt, 0)
                 graceDebt = 0
@@ -148,6 +152,14 @@ public struct Resolver: Sendable {
                 }
                 state.pendingTies = next
                 state.tick += ticks
+            case .tuplet(let numerator, let denominator, let body):
+                // Written durations inside the group scale by the fraction;
+                // the sticky duration itself stays unscaled.
+                let outer = state.tupletScale
+                state.tupletScale = (outer.numerator * numerator,
+                                     outer.denominator * denominator)
+                try resolveSequence(body, into: &state)
+                state.tupletScale = outer
             case .grace(let body, let acciaccatura):
                 // Grace notes steal their span from the note that follows: the
                 // group sounds first, the debt shortens the next event, and
