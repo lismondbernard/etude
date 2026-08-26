@@ -27,7 +27,54 @@ public struct SMFWriter: SMFWriting {
         bytes += uint16(UInt16(score.voices.count + 1))   // meta track + voices
         bytes += uint16(UInt16(ResolvedMusic.ticksPerQuarter))
         bytes += metaTrack(for: score)
+        for voice in score.voices {
+            bytes += track(for: voice)
+        }
         return bytes
+    }
+
+    /// One voice, one `MTrk`: name meta, then the notes in tick order with a
+    /// status byte on EVERY event (no running status — see the header note).
+    /// At a shared tick, note-offs precede note-ons so repeated pitches
+    /// re-attack instead of being swallowed.
+    private func track(for voice: Voice) -> [UInt8] {
+        var data: [UInt8] = [0, 0xFF, 0x03, UInt8(voice.name.utf8.count)]
+        data += Array(voice.name.utf8)
+
+        struct Moment {
+            let tick: Int
+            let isOff: Bool
+            let bytes: [UInt8]
+        }
+        var moments: [Moment] = []
+        for event in voice.events {
+            moments.append(Moment(tick: event.startTick, isOff: false,
+                                  bytes: [0x90, event.pitch, event.velocity]))
+            moments.append(Moment(tick: event.startTick + event.durationTicks, isOff: true,
+                                  bytes: [0x80, event.pitch, 0]))
+        }
+        moments.sort { ($0.tick, $0.isOff ? 0 : 1) < ($1.tick, $1.isOff ? 0 : 1) }
+
+        var previousTick = 0
+        for moment in moments {
+            data += variableLength(moment.tick - previousTick)
+            previousTick = moment.tick
+            data += moment.bytes
+        }
+        data += endOfTrack
+        return chunk("MTrk", data)
+    }
+
+    /// MIDI's variable-length quantity: seven bits per byte, high bit set on
+    /// all but the last.
+    private func variableLength(_ value: Int) -> [UInt8] {
+        var groups: [UInt8] = [UInt8(value & 0x7F)]
+        var rest = value >> 7
+        while rest > 0 {
+            groups.append(UInt8(rest & 0x7F | 0x80))
+            rest >>= 7
+        }
+        return groups.reversed()
     }
 
     /// Track 0: tempo and time signature, nothing sounding.
