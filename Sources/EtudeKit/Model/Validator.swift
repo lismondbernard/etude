@@ -14,6 +14,8 @@ public enum ValidationFinding: Equatable, Sendable {
     case registerViolation(voice: String, pitch: UInt8)
     /// A voice's span is not a whole number of bars under the meter.
     case raggedBars(voice: String, ticks: Int, barTicks: Int)
+    /// The lead voice does not open with the piece's known first notes.
+    case fingerprintMismatch(voice: String, opening: [UInt8], expected: [UInt8])
 }
 
 /// Thrown when validation finds anything — carrying all findings, not the first.
@@ -29,12 +31,27 @@ public struct ValidationError: Error, Equatable, Sendable {
 public struct Validator: Sendable {
     public init() {}
 
-    public func validate(_ score: Score) throws(ValidationError) {
+    /// Runs every invariant; `expectedOpening`, when given, pins the lead
+    /// voice's first sounding pitches (corpus fingerprint metadata, §4.4).
+    public func validate(
+        _ score: Score, expectedOpening: [UInt8]? = nil
+    ) throws(ValidationError) {
         var findings: [ValidationFinding] = []
         findings += alignmentFindings(score)
         findings += registerFindings(score)
         findings += barFindings(score)
+        findings += fingerprintFindings(score, expectedOpening: expectedOpening)
         guard findings.isEmpty else { throw ValidationError(findings: findings) }
+    }
+
+    /// Invariant 4 — opening-phrase fingerprint on the lead (first) voice.
+    private func fingerprintFindings(
+        _ score: Score, expectedOpening: [UInt8]?
+    ) -> [ValidationFinding] {
+        guard let expected = expectedOpening, let lead = score.voices.first else { return [] }
+        let opening = lead.events.prefix(expected.count).map(\.pitch)
+        guard opening != expected else { return [] }
+        return [.fingerprintMismatch(voice: lead.name, opening: opening, expected: expected)]
     }
 
     /// Invariant 1 — voice alignment: simultaneous voices span equal ticks.
