@@ -10,6 +10,16 @@
 % BUG-004 note: the prototype reduced the ending's `<< … >>` octave-reference
 % bar to its sustained bass note after register drift was clamped (and hidden).
 % The Swift Validator must THROW on that figure — see docs/adr/0001-clamp-vs-throw.md.
+%
+% Phase 3 correction: the bass octave marks originally copied from the
+% prototype resolved the endings down to E0/D0 — sub-audible drift the
+% prototype's `clamp(lo=36)` silently lifted, exactly BUG-004's failure mode.
+% The Validator caught it on first assembly, and the marks here now resolve
+% honestly to the pitches the clamp used to fake (E2 pedals, G2+A2, D2+A2+D2).
+% Also: this engine threads relative context through pitched rests (`d4\rest`)
+% as LilyPond does; the prototype ignored rest pitches, so its MIDI put the
+% first-ending chords an octave higher than the engraving implies. The golden
+% fixture encodes this engine's engraving-faithful reading.
 % Original edition: https://www.mutopiaproject.org/ (search "Satie Gymnopédie")
 
 \header {
@@ -54,11 +64,11 @@ bass = \relative c {
   \time 3/4
   \repeat volta 2 {
     g2. d2. g2. d2. g2. d2. g2. d2. g2. d2. g2. d2. g2. d2. g2. d2.
-    fis2. b,2. e2. e2. d2. a2. d2. d2. d2. d2. d2. d2. d2. d2. d2.
+    fis2. b2. e,2. e2. d2. a'2. d,2. d2. d2. d2. d2. d2. d2. d2. d2.
   }
   \alternative {
-    { e2. fis2. b,2. e2. e2. e,2. <g' a,>2. <d a d,>2. }
-    { e,2. e2. e2. e2. e2. e,2. <g' a,>2. <d a d,>2. }
+    { e2. fis2. b2. e,2. e2. e2. <g a>2. <d a' d,>2. }
+    { e2. e2. e2. e2. e2. e2. <g a>2. <d a' d,>2. }
   }
 }
 

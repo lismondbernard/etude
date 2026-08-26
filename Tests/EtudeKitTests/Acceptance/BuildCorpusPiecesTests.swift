@@ -57,6 +57,26 @@ struct BuildCorpusPiecesTests {
         try Validator().validate(score, expectedOpening: [67, 72, 76, 67, 72, 76])
     }
 
+    @Test("the Gymnopédie assembles and validates", .tags(.acceptance))
+    func gymnopedie() throws {
+        let score = try buildPiece("gymnopedie-1.ly")
+
+        #expect(score.voices.map(\.name) == ["melody", "accompaniment", "bass"])
+        // 78 performed bars of 3/4, every voice.
+        #expect(score.voices.map(\.totalTicks) == Array(repeating: 112320, count: 3))
+        try Validator().validate(score, expectedOpening: [78, 81, 79, 78])
+    }
+
+    @Test("the Gnossienne assembles and validates", .tags(.acceptance))
+    func gnossienne() throws {
+        let score = try buildPiece("gnossienne-1.ly")
+
+        #expect(score.voices.map(\.name) == ["melody", "upperChords", "lowerChords", "bass"])
+        // 82 performed bars of 4/4, every voice.
+        #expect(score.voices.map(\.totalTicks) == Array(repeating: 157440, count: 4))
+        try Validator().validate(score, expectedOpening: [72, 75, 74, 72, 72, 71])
+    }
+
     // MARK: - Helpers
 
     /// The whole pipeline up to a validated, assembled score.
