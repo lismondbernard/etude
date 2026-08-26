@@ -106,6 +106,17 @@ public struct Parser: Sendable {
             case .chordRepeat(let duration):
                 nodes.append(.chordRepeat(duration: duration))
                 i += 1
+            case .command("alternative"):
+                // Alternative endings are not standalone music — they modify
+                // the repeat that precedes them.
+                guard case .repeated(let style, let count, let body, []) = nodes.last else {
+                    throw ParseError.unexpectedToken(.command("alternative"), index: i)
+                }
+                i += 1
+                nodes[nodes.count - 1] = .repeated(
+                    style, count: count, body: body,
+                    alternatives: try parseAlternativeGroups(tokens, &i)
+                )
             case .command(let name):
                 nodes.append(try parseCommand(name, tokens, &i))
             default:
@@ -147,6 +158,31 @@ public struct Parser: Sendable {
         default:
             throw ParseError.unexpectedToken(.command(name), index: i)
         }
+    }
+
+    /// Consumes `{ { … } { … } }` — the endings list of an `\alternative`.
+    private func parseAlternativeGroups(
+        _ tokens: [Token], _ i: inout Int
+    ) throws(ParseError) -> [[MusicNode]] {
+        guard i < tokens.count else { throw ParseError.unexpectedEndOfInput }
+        guard tokens[i] == .braceOpen else {
+            throw ParseError.unexpectedToken(tokens[i], index: i)
+        }
+        i += 1
+        var groups: [[MusicNode]] = []
+        while i < tokens.count {
+            switch tokens[i] {
+            case .braceOpen:
+                i += 1
+                groups.append(try parseSequence(tokens, &i, endingAt: .braceClose))
+            case .braceClose:
+                i += 1
+                return groups
+            default:
+                throw ParseError.unexpectedToken(tokens[i], index: i)
+            }
+        }
+        throw ParseError.unexpectedEndOfInput
     }
 
     /// Consumes a required `{ … }` group and returns its contents.

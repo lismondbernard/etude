@@ -32,6 +32,28 @@ struct ParseRepeatsTests {
         }
     }
 
+    @Test("attaches alternative endings to the preceding volta repeat", .tags(.unit))
+    func alternativeEndings() throws {
+        #expect(try makeSUT().parseMusic(tokens("\\repeat volta 2 { c } \\alternative { { d } { e } }")) == [
+            .repeated(.volta, count: 2, body: [note("c")],
+                      alternatives: [[note("d")], [note("e")]]),
+        ])
+    }
+
+    @Test("delivers a typed error on \\alternative with no repeat before it", .tags(.unit))
+    func alternativeWithoutRepeat() throws {
+        #expect(throws: ParseError.unexpectedToken(.command("alternative"), index: 1)) {
+            try makeSUT().parseMusic(tokens("c \\alternative { { d } }"))
+        }
+    }
+
+    @Test("delivers a typed error on a bare event inside \\alternative", .tags(.unit))
+    func bareEventInsideAlternative() throws {
+        #expect(throws: ParseError.unexpectedToken(.note(NoteToken(name: "d")), index: 8)) {
+            try makeSUT().parseMusic(tokens("\\repeat volta 2 { c } \\alternative { d }"))
+        }
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> Parser { Parser() }
