@@ -478,7 +478,7 @@ in any signature past the Resolver.
 **Accept:** Gymnopédie and Gnossienne resolve to correct opening fingerprints and
 bar counts (78 and 82 bars).
 
-### Phase 3 — Model, Validator, MIDI writer
+### Phase 3 — Model, Validator, MIDI writer (done)
 §4.4–4.5 including the SMF reader and round-trip property. BUG-004 as a
 validator-throws test. Golden fixtures established.
 **Accept:** all six pieces build, validate, byte-stable across two consecutive
@@ -518,9 +518,9 @@ Tag `v0.1.0`.
 | Piece | Voices/Tracks | Bars | Opening melody | Notes |
 |---|---|---|---|---|
 | Minuet in G (Petzold, BWV Anh. 114) | 2 (melody, bass) | AABB w/ repeats (16+16) | D5 G4 A4 B4 C5 | 4 mordents, 1 prall, 1 grace; ~126 BPM |
-| Bach Prelude in C (BWV 846) | 2 | 34 (no Schwencke bar) | broken C-major figure | ~72 BPM |
-| Air on the G String (BWV 1068) | 2 (flute, guitar-upper) | 18 | long D5 | 2 acciaccaturas; bass part omitted (edition mismatch) |
-| Winter Largo (RV 297) | 5→3 tracks | 18 | E♭-major solo (D♯/A♯ enharmonic in source) | ~52 BPM, pizzicato accompaniment |
-| Gymnopédie No. 1 | 2 (melody, acc+bass) | 78 | F♯5 A5 G5 F♯5 | Gmaj7/Dmaj7 alternation; "Lent" |
-| Gnossienne No. 1 | 3 | 82 | C5 E♭5 D5 C5 B4 | English note names, bare `\relative`, `q` chord-repeat, low-F pedal |
+| Bach Prelude in C (BWV 846) | 3 (figuration, tenor, bass) | 34 (no Schwencke bar) | broken C-major figure (G4 C5 E5) | ~72 BPM |
+| Air on the G String (BWV 1068) | 2 (flute, guitar-upper) | 18 | long F♯5 (tied whole + eighth) | 2 acciaccaturas; bass part omitted (edition mismatch); Phase 3 corrected this row's opening (was "long D5" — the prototype MIDI and the source both open on F♯5) |
+| Winter Largo (RV 297) | 5 (solo, 2 violins, viola, cello) | 18 | E♭-major solo (D♯/A♯ enharmonic in source) | ~52 BPM, pizzicato accompaniment |
+| Gymnopédie No. 1 | 3 (melody, accompaniment, bass) | 78 | F♯5 A5 G5 F♯5 | Gmaj7/Dmaj7 alternation; "Lent" |
+| Gnossienne No. 1 | 4 (melody, upper, lower, bass) | 82 | C5 E♭5 D5 C5 B4 | English note names, bare `\relative`, `q` chord-repeat, low-F pedal |
 | Clair de Lune | 4 voices | 72 | — | KNOWN ISSUE #1, `withKnownIssue` |
