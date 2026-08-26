@@ -43,6 +43,10 @@ public indirect enum MusicNode: Equatable, Sendable {
     case pitchedRest(NoteToken)
     case meter(beats: Int, beatUnit: Int)
     case tempo(label: String?, beatUnit: Int?, beatsPerMinute: Int?)
+    /// A use of a named definition (`\themeOneMelody`). Unresolved here —
+    /// binding it to its definition is the Resolver's job, so an unknown name
+    /// fails loudly there rather than silently at parse time.
+    case reference(String)
 }
 
 /// Recursive-descent parser over the tokenizer's stream. Stateless between
@@ -220,7 +224,10 @@ public struct Parser: Sendable {
             i += 1
             return .repeated(style, count: count, body: try parseBracedBody(tokens, &i), alternatives: [])
         default:
-            throw ParseError.unexpectedToken(.command(name), index: i)
+            // Any command with no grammar of its own reads as a reference to a
+            // named definition.
+            i += 1
+            return .reference(name)
         }
     }
 
