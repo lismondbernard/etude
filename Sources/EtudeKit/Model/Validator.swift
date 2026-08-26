@@ -12,6 +12,8 @@ public enum ValidationFinding: Equatable, Sendable {
     /// A pitch outside the plausible instrument range (A0…C8) — an octave
     /// artifact from resolution, not music (BUG-004/006).
     case registerViolation(voice: String, pitch: UInt8)
+    /// A voice's span is not a whole number of bars under the meter.
+    case raggedBars(voice: String, ticks: Int, barTicks: Int)
 }
 
 /// Thrown when validation finds anything — carrying all findings, not the first.
@@ -31,6 +33,7 @@ public struct Validator: Sendable {
         var findings: [ValidationFinding] = []
         findings += alignmentFindings(score)
         findings += registerFindings(score)
+        findings += barFindings(score)
         guard findings.isEmpty else { throw ValidationError(findings: findings) }
     }
 
@@ -41,6 +44,14 @@ public struct Validator: Sendable {
         return score.voices
             .filter { $0.totalTicks != longest }
             .map { .voiceMisaligned(voice: $0.name, ticks: $0.totalTicks, expectedTicks: longest) }
+    }
+
+    /// Invariant 3 — bar arithmetic: each voice fills whole bars.
+    private func barFindings(_ score: Score) -> [ValidationFinding] {
+        guard let meter = score.meter else { return [] }
+        return score.voices
+            .filter { $0.totalTicks % meter.barTicks != 0 }
+            .map { .raggedBars(voice: $0.name, ticks: $0.totalTicks, barTicks: meter.barTicks) }
     }
 
     /// Invariant 2 — register sanity: every pitch within the piano's A0…C8.
