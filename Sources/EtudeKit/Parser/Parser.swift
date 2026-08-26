@@ -53,10 +53,41 @@ public indirect enum MusicNode: Equatable, Sendable {
     case context(type: String, body: MusicNode)
 }
 
+/// A parsed `.ly` file: named definitions plus (in later cycles) header
+/// metadata and the `\score` assembly. Still LilyPond-shaped (§0.4).
+public struct LilyFile: Equatable, Sendable {
+    public let definitions: [String: MusicNode]
+
+    public init(definitions: [String: MusicNode]) {
+        self.definitions = definitions
+    }
+}
+
 /// Recursive-descent parser over the tokenizer's stream. Stateless between
 /// runs; all per-run state lives inside `parseMusic`.
 public struct Parser: Sendable {
     public init() {}
+
+    /// Parses a whole `.ly` file: top-level assignments and declarations.
+    public func parseFile(_ tokens: [Token]) throws(ParseError) -> LilyFile {
+        var definitions: [String: MusicNode] = [:]
+        var i = 0
+        while i < tokens.count {
+            switch tokens[i] {
+            case .identifier(let name) where i + 1 < tokens.count && tokens[i + 1] == .equals:
+                i += 2
+                definitions[name] = try parseExpression(tokens, &i)
+            case .command("version"), .command("language"), .command("include"):
+                i += 1
+                if i < tokens.count, case .string = tokens[i] {
+                    i += 1
+                }
+            default:
+                throw ParseError.unexpectedToken(tokens[i], index: i)
+            }
+        }
+        return LilyFile(definitions: definitions)
+    }
 
     /// Parses a music expression sequence — the inside of a `{ … }` block.
     public func parseMusic(_ tokens: [Token]) throws(ParseError) -> [MusicNode] {
