@@ -214,17 +214,23 @@ public struct Resolver: Sendable {
                 try resolveSequence([definition], into: &state)
             case .parallel(let children):
                 // All children start together; the longest one carries the
-                // clock forward. The relative context threads through them in
-                // source order — the order a reader meets the notes.
+                // clock forward. LilyPond's relative rule: every child places
+                // from the context at the group's door, and afterwards the
+                // FIRST child's end leads.
                 state.pendingTies = [:]
                 let start = state.tick
+                let entering = state.reference
+                var exitReference = state.reference
                 var furthest = start
-                for child in children {
+                for (index, child) in children.enumerated() {
                     state.tick = start
+                    state.reference = entering
                     try resolveSequence([child], into: &state)
                     state.pendingTies = [:]
+                    if index == 0 { exitReference = state.reference }
                     furthest = max(furthest, state.tick)
                 }
+                state.reference = exitReference
                 state.tick = furthest
             case .tuplet(let numerator, let denominator, let body):
                 // Written durations inside the group scale by the fraction;

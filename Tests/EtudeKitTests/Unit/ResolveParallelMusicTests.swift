@@ -17,8 +17,27 @@ struct ResolveParallelMusicTests {
         #expect(resolved.totalTicks == 1440)
     }
 
-    @Test("the relative context threads the children in source order", .tags(.unit))
-    func contextThreadsInSourceOrder() throws {
+    @Test("each child places from the context at the group's door", .tags(.unit))
+    func childrenPlaceFromEnteringContext() throws {
+        // LilyPond's rule: every simultaneous expression starts from the
+        // context BEFORE `<<`, and afterwards the FIRST child's end leads.
+        let resolved = try makeSUT().resolve([
+            .relative(anchor: NoteToken(name: "c", octaveMarks: 1), body: [
+                note("c", dur(4)),
+                .parallel([
+                    .sequence([note("e", dur(4)), note("f")]),
+                    .sequence([note("g", dur(4)), note("a")]),
+                ]),
+                note("b", dur(4)),
+            ]),
+        ])
+        // Child two's g places from C4 (down to G3) — NOT from child one's F4.
+        // The closing b places from child one's F4 — NOT from child two's A3.
+        #expect(resolved.notes.map(\.midiNote) == [60, 64, 65, 55, 57, 71])
+    }
+
+    @Test("the Gnossienne ossia wrapper resolves to the same A-flats", .tags(.unit))
+    func gnossienneOssiaShape() throws {
         // Verbatim shape from the Gnossienne accompaniment (BUG-005 territory):
         // `af4\rest <<af2 \new Voice{ … af4 }>> af4` — every af is the same
         // A-flat 3, hidden or not (\hideNotes affects print, never MIDI).
