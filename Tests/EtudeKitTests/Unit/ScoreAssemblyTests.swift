@@ -75,7 +75,7 @@ struct ScoreAssemblyTests {
     func assumedTempo() throws {
         // Clair's `\tempo"Andante très expressif"` names a feel, not a number.
         let file = try Parser().parseFile(Tokenizer().tokenize(
-            "melody = { \tempo \"Andante\" c4 }"))
+            "melody = { \\tempo \"Andante\" c4 }"))
         let score = try makeSUT().score(
             from: file, voices: ["melody"], title: "", assumingBeatsPerMinute: 60)
 
