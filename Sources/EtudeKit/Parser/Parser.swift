@@ -17,6 +17,7 @@ public enum ParseError: Error, Equatable, Sendable {
 /// the Resolver's job, and this shape must not appear past it.
 public indirect enum MusicNode: Equatable, Sendable {
     case note(NoteToken, tied: Bool)
+    case rest(RestToken)
 }
 
 /// Recursive-descent parser over the tokenizer's stream. Stateless between
@@ -32,6 +33,9 @@ public struct Parser: Sendable {
             switch tokens[i] {
             case .note(let noteToken):
                 nodes.append(.note(noteToken, tied: false))
+                i += 1
+            case .rest(let restToken):
+                nodes.append(.rest(restToken))
                 i += 1
             default:
                 throw ParseError.unexpectedToken(tokens[i], index: i)
