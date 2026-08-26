@@ -56,9 +56,11 @@ public indirect enum MusicNode: Equatable, Sendable {
 /// A parsed `.ly` file: named definitions plus (in later cycles) header
 /// metadata and the `\score` assembly. Still LilyPond-shaped (§0.4).
 public struct LilyFile: Equatable, Sendable {
+    public let header: [String: String]
     public let definitions: [String: MusicNode]
 
-    public init(definitions: [String: MusicNode]) {
+    public init(header: [String: String] = [:], definitions: [String: MusicNode]) {
+        self.header = header
         self.definitions = definitions
     }
 }
@@ -70,10 +72,14 @@ public struct Parser: Sendable {
 
     /// Parses a whole `.ly` file: top-level assignments and declarations.
     public func parseFile(_ tokens: [Token]) throws(ParseError) -> LilyFile {
+        var header: [String: String] = [:]
         var definitions: [String: MusicNode] = [:]
         var i = 0
         while i < tokens.count {
             switch tokens[i] {
+            case .command("header"):
+                i += 1
+                header = try parseHeaderBlock(tokens, &i)
             case .identifier(let name) where i + 1 < tokens.count && tokens[i + 1] == .equals:
                 i += 2
                 definitions[name] = try parseExpression(tokens, &i)
@@ -86,7 +92,37 @@ public struct Parser: Sendable {
                 throw ParseError.unexpectedToken(tokens[i], index: i)
             }
         }
-        return LilyFile(definitions: definitions)
+        return LilyFile(header: header, definitions: definitions)
+    }
+
+    /// Consumes `{ field = "value" … }` — the metadata block.
+    private func parseHeaderBlock(
+        _ tokens: [Token], _ i: inout Int
+    ) throws(ParseError) -> [String: String] {
+        guard i < tokens.count else { throw ParseError.unexpectedEndOfInput }
+        guard tokens[i] == .braceOpen else {
+            throw ParseError.unexpectedToken(tokens[i], index: i)
+        }
+        i += 1
+        var fields: [String: String] = [:]
+        while i < tokens.count {
+            switch tokens[i] {
+            case .braceClose:
+                i += 1
+                return fields
+            case .identifier(let field) where i + 1 < tokens.count && tokens[i + 1] == .equals:
+                i += 2
+                guard i < tokens.count else { throw ParseError.unexpectedEndOfInput }
+                guard case .string(let value) = tokens[i] else {
+                    throw ParseError.unexpectedToken(tokens[i], index: i)
+                }
+                fields[field] = value
+                i += 1
+            default:
+                throw ParseError.unexpectedToken(tokens[i], index: i)
+            }
+        }
+        throw ParseError.unexpectedEndOfInput
     }
 
     /// Parses a music expression sequence — the inside of a `{ … }` block.

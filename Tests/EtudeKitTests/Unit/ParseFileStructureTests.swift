@@ -25,6 +25,23 @@ struct ParseFileStructureTests {
         }
     }
 
+    @Test("parses the header block into metadata fields", .tags(.unit))
+    func headerBlock() throws {
+        let file = try makeSUT().parseFile(
+            tokens("\\header { title = \"Gymnop\u{e9}die No. 1\" composer = \"Erik Satie\" }"))
+        #expect(file.header == [
+            "title": "Gymnop\u{e9}die No. 1",
+            "composer": "Erik Satie",
+        ])
+    }
+
+    @Test("delivers a typed error on a header field with no string value", .tags(.unit))
+    func headerFieldWithoutString() throws {
+        #expect(throws: ParseError.unexpectedToken(.number(3), index: 4)) {
+            try makeSUT().parseFile(tokens("\\header { title = 3 }"))
+        }
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> Parser { Parser() }
