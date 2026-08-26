@@ -226,6 +226,22 @@ public struct Parser: Sendable {
             case .chordRepeat(let duration):
                 nodes.append(.chordRepeat(duration: duration))
                 i += 1
+            case .duration(let written):
+                // A free-standing written value times the event before it.
+                switch nodes.last {
+                case .note(let noteToken, let tied):
+                    nodes[nodes.count - 1] = .note(
+                        NoteToken(name: noteToken.name, octaveMarks: noteToken.octaveMarks,
+                                  forcedAccidental: noteToken.forcedAccidental, duration: written),
+                        tied: tied)
+                case .chord(let pitches, _, let tied):
+                    nodes[nodes.count - 1] = .chord(pitches, duration: written, tied: tied)
+                case .chordRepeat:
+                    nodes[nodes.count - 1] = .chordRepeat(duration: written)
+                default:
+                    throw ParseError.unexpectedToken(.duration(written), index: i)
+                }
+                i += 1
             case .slurOpen, .slurClose, .barCheck:
                 // Engraving punctuation — no performed meaning.
                 i += 1

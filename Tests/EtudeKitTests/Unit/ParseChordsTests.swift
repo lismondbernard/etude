@@ -45,6 +45,24 @@ struct ParseChordsTests {
         }
     }
 
+    @Test("a separated duration times the preceding event", .tags(.unit))
+    func separatedDuration() throws {
+        // Verbatim shape from Clair de Lune: `<f' af> ~ <f af> 4.`
+        #expect(try makeSUT().parseMusic(tokens("<f a>2 ~ <f a> 4. c")) == [
+            .chord([NoteToken(name: "f"), NoteToken(name: "a")], duration: dur(2), tied: true),
+            .chord([NoteToken(name: "f"), NoteToken(name: "a")],
+                   duration: dur(4, dots: 1), tied: false),
+            note("c"),
+        ])
+    }
+
+    @Test("delivers a typed error on a duration with nothing before it", .tags(.unit))
+    func strayDuration() throws {
+        #expect(throws: ParseError.unexpectedToken(.duration(DurationToken(4, dots: 1)), index: 0)) {
+            try makeSUT().parseMusic(tokens("4. c"))
+        }
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> Parser { Parser() }
