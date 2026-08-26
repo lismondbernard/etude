@@ -13,6 +13,7 @@
 /// A semantic error found while resolving the parse tree.
 public enum ResolveError: Error, Equatable, Sendable {
     case unknownPitchName(String)
+    case chordRepeatWithoutChord
     /// A tree shape the resolver does not (yet) perform — failing loudly beats
     /// skipping music (ADR-0001 territory: silence hides wrongness).
     case unsupportedNode(String)
@@ -67,6 +68,8 @@ public struct Resolver: Sendable {
         /// The pitch each relative note is placed against; `nil` outside a
         /// `\relative` block (absolute mode).
         var reference: (letter: Int, octave: Int)?
+        /// The last chord's sounded pitches, for the `q` repeat.
+        var lastChord: [Int]?
 
         mutating func ticks(for written: DurationToken?) -> Int {
             if let written { lastDuration = written }
@@ -84,6 +87,33 @@ public struct Resolver: Sendable {
                 let ticks = state.ticks(for: noteToken.duration)
                 state.notes.append(
                     ResolvedNote(midiNote: midi, startTick: state.tick, durationTicks: ticks))
+                state.tick += ticks
+            case .chord(let pitches, let duration, _):
+                let ticks = state.ticks(for: duration)
+                var sounded: [Int] = []
+                var firstReference: (letter: Int, octave: Int)?
+                for (index, pitch) in pitches.enumerated() {
+                    // First note against the outer context; later notes within
+                    // the chord; afterwards the context continues from the
+                    // FIRST note (LilyPond's chord rule).
+                    let midi = try midiNote(of: pitch, in: &state)
+                    if index == 0 { firstReference = state.reference }
+                    sounded.append(midi)
+                    state.notes.append(
+                        ResolvedNote(midiNote: midi, startTick: state.tick, durationTicks: ticks))
+                }
+                if let firstReference { state.reference = firstReference }
+                state.lastChord = sounded
+                state.tick += ticks
+            case .chordRepeat(let duration):
+                guard let chord = state.lastChord else {
+                    throw ResolveError.chordRepeatWithoutChord
+                }
+                let ticks = state.ticks(for: duration)
+                for midi in chord {
+                    state.notes.append(
+                        ResolvedNote(midiNote: midi, startTick: state.tick, durationTicks: ticks))
+                }
                 state.tick += ticks
             case .relative(let anchor, let body):
                 let outer = state.reference
