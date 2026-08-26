@@ -192,6 +192,11 @@ public struct Parser: Sendable {
             }
             i += 1
             return .context(type: contextType, body: try parseExpression(tokens, &i))
+        case "crossStaff":
+            // Engraving hint about which staff prints the notes; its braces
+            // group exactly like bare `{ }` — never voice separators (BUG-003).
+            i += 1
+            return .sequence(try parseBracedBody(tokens, &i))
         case "grace", "acciaccatura":
             i += 1
             return .grace(try parseBracedBody(tokens, &i), acciaccatura: name == "acciaccatura")
