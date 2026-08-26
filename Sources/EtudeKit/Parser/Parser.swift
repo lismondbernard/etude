@@ -38,6 +38,9 @@ public indirect enum MusicNode: Equatable, Sendable {
     /// Ornamental notes that steal time from the note that follows the group;
     /// an acciaccatura is played very short regardless of written duration.
     case grace([MusicNode], acciaccatura: Bool)
+    /// A note turned silent by `\rest`: placed (and octave-threaded) like the
+    /// written pitch, but nothing sounds.
+    case pitchedRest(NoteToken)
 }
 
 /// Recursive-descent parser over the tokenizer's stream. Stateless between
@@ -77,8 +80,13 @@ public struct Parser: Sendable {
                 i += 1
                 nodes.append(.parallel(try parseSequence(tokens, &i, endingAt: .parallelEnd)))
             case .note(let noteToken):
-                nodes.append(.note(noteToken, tied: false))
-                i += 1
+                if i + 1 < tokens.count, tokens[i + 1] == .command("rest") {
+                    nodes.append(.pitchedRest(noteToken))
+                    i += 2
+                } else {
+                    nodes.append(.note(noteToken, tied: false))
+                    i += 1
+                }
             case .rest(let restToken):
                 nodes.append(.rest(restToken))
                 i += 1

@@ -19,6 +19,18 @@ struct ParseRestsTests {
         ])
     }
 
+    @Test("parses a pitched rest from a note marked \\rest", .tags(.unit))
+    func pitchedRest() throws {
+        // Verbatim shape from the Gymnopédie accompaniment: `e4\rest` — the
+        // pitch places the rest on the staff and threads the relative context,
+        // but nothing sounds.
+        #expect(try makeSUT().parseMusic(tokens("e4\\rest <g e b>2")) == [
+            .pitchedRest(NoteToken(name: "e", duration: dur(4))),
+            .chord([NoteToken(name: "g"), NoteToken(name: "e"), NoteToken(name: "b")],
+                   duration: dur(2), tied: false),
+        ])
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> Parser { Parser() }
