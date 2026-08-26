@@ -91,7 +91,11 @@ myExplicitPageBreak = { \pageBreak }
 rhUp = \relative c' \rhUpRed
 rhDown = \relative c' \rhDownGreen
 lhUp = \relative c' \lhUpBlue
-lhDown= \relative c' \lhDownGrey
+% Phase 4 correction: this anchor read c' in the source as vendored, floating
+% the left hand's LOWER voice around middle C — above lhUp. The hand-corrected
+% expanded copy (clair-de-lune.expanded.ly) anchors it at c, like every other
+% lhDown section, and the register only makes sense there.
+lhDown= \relative c, \lhDownGrey
 
 \parallelMusic #'(rhUpRed rhDownGreen lhUpBlue lhDownGrey)
 {
