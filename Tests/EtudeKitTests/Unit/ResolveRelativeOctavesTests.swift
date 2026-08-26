@@ -66,6 +66,22 @@ struct ResolveRelativeOctavesTests {
         #expect(resolved.notes.map(\.midiNote) == [67, 48])
     }
 
+    @Test("a pitched rest sounds nothing but threads the context", .tags(.unit))
+    func pitchedRestThreadsContext() throws {
+        // Verbatim shape from the Gymnopédie endings: `e4\rest <g e b>2` —
+        // the written e places the following chord, silently.
+        let resolved = try makeSUT().resolve([
+            .relative(anchor: NoteToken(name: "c", octaveMarks: 1), body: [
+                .pitchedRest(NoteToken(name: "e", duration: dur(4))),
+                .chord([NoteToken(name: "g"), NoteToken(name: "e"), NoteToken(name: "b")],
+                       duration: dur(2), tied: false),
+            ]),
+        ])
+        #expect(resolved.notes.map(\.midiNote) == [67, 64, 59])
+        #expect(resolved.notes.map(\.startTick) == [480, 480, 480])
+        #expect(resolved.totalTicks == 480 + 960)
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> Resolver { Resolver() }

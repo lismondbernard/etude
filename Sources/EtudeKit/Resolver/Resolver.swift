@@ -115,6 +115,11 @@ public struct Resolver: Sendable {
                         ResolvedNote(midiNote: midi, startTick: state.tick, durationTicks: ticks))
                 }
                 state.tick += ticks
+            case .pitchedRest(let noteToken):
+                // Placed like its written pitch — threading the relative
+                // context — but nothing sounds.
+                _ = try midiNote(of: noteToken, in: &state)
+                state.tick += state.ticks(for: noteToken.duration)
             case .relative(let anchor, let body):
                 let outer = state.reference
                 let anchorNote = anchor ?? NoteToken(name: "f")
