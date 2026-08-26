@@ -7,11 +7,25 @@ copied from `../../../../music/` (the prototype working folder). They are the in
 golden baseline per PLAN.md §5: "if the original prototype files are provided, use them;
 if not, the first byte-stable output of the finished pipeline becomes the golden baseline."
 
-**Important:** the Swift pipeline does not exist yet. When Phase 3 emits its first
-byte-stable output, each fixture must be **re-baselined** against the Swift writer (the
-Swift SMF encoding — division, meta ordering, EOT placement — will not necessarily match
-the prototype byte-for-byte). When re-baselining, record the commit hash in a sidecar note
-per fixture, and treat any diff as a review item, not an automatic overwrite.
+**Provenance (Phase 3 re-baseline):** the six non-Clair fixtures are now the **Swift
+writer's** first byte-stable output (`SMFWriter`, Type 1, 480 tpq, one tempo/meta track
+plus one named track per voice, full-duration note-offs, no running status). They were
+re-baselined in the commit that added `EmitCorpusGoldensTests` — see `git log` for the
+hash. The diff against the prototype fixtures was **reviewed, not auto-overwritten**;
+every piece was compared to the prototype MIDI at pitch level first:
+
+- **Minuet, Winter, Prelude** — pitch/tick-identical to the prototype.
+- **Air** — identical except two guitar notes: partial chord-to-note ties
+  (`< fis a >8 ~ a`) sustain here as LilyPond does; the prototype re-attacked.
+- **Gymnopédie** — bass ending octaves corrected (the prototype clamped
+  sub-audible drift, BUG-004); first-ending chords sit an octave lower because
+  pitched rests thread relative context here, per LilyPond.
+- **Gnossienne** — grace notes steal their written value (prototype compressed
+  to a 32nd), and the hidden ossia voice sounds (hideNotes is engraving-only),
+  adding 14 accompaniment notes.
+
+`clair-de-lune.mid` is still the prototype's output — the boss fight re-baselines in
+Phase 4 (known issue #1).
 
 | Fixture | Piece | Prototype BPM |
 |---|---|---|
