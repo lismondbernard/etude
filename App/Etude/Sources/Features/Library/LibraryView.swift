@@ -1,44 +1,46 @@
 import SwiftUI
 import EtudeKit
 
-/// The corpus browser (PLAN.md §8, screen 1). Phase 0 intentionally shows an EMPTY
-/// library: the corpus loader lands once the engine can build pieces (Phase 5). The
-/// empty state and its accessibility identifiers exist now so the first UI test has a
-/// stable surface to assert against.
+/// The corpus browser (PLAN.md §8, screen 1): a plain view over the engine's
+/// catalog — no view model, per §0.9, until the corpus becomes dynamic.
 struct LibraryView: View {
-    /// Placeholder row model. Replaced by an EtudeKit-backed corpus type in Phase 5.
-    struct PieceRow: Identifiable {
-        let id: String
-        let title: String
-        let composer: String
-    }
-
-    /// Empty in Phase 0 — no pieces are loadable until the pipeline exists.
-    private let pieces: [PieceRow] = []
-
     var body: some View {
         NavigationStack {
-            Group {
-                if pieces.isEmpty {
-                    ContentUnavailableView(
-                        "No pieces yet",
-                        systemImage: "music.note.list",
-                        description: Text("The corpus loads once the engine can build pieces (Phase 5).")
-                    )
-                    .accessibilityIdentifier("library.emptyState")
-                } else {
-                    List(pieces) { piece in
-                        VStack(alignment: .leading) {
-                            Text(piece.title).font(.headline)
-                            Text(piece.composer).font(.subheadline).foregroundStyle(.secondary)
-                        }
-                        .accessibilityIdentifier("library.row.\(piece.id)")
-                    }
+            List(CorpusPiece.all) { piece in
+                NavigationLink(value: piece.id) {
+                    row(for: piece)
+                }
+                .accessibilityIdentifier("library.row.\(piece.id)")
+            }
+            .navigationDestination(for: String.self) { id in
+                if let piece = CorpusPiece.all.first(where: { $0.id == id }) {
+                    PieceDetailView(piece: piece)
                 }
             }
             .navigationTitle("Étude")
             .accessibilityIdentifier("library.screen")
         }
+    }
+
+    private func row(for piece: CorpusPiece) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(piece.title).font(.headline)
+            Text(piece.composer).font(.subheadline).foregroundStyle(.secondary)
+            HStack(spacing: 6) {
+                Text(piece.licenseBadge)
+                    .font(.caption2)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(.quaternary, in: Capsule())
+                if piece.knownIssue != nil {
+                    // The catalog is as honest as the tests (ADR-0003).
+                    Label("Known issue", systemImage: "exclamationmark.triangle")
+                        .font(.caption2)
+                        .foregroundStyle(.orange)
+                }
+            }
+        }
+        .padding(.vertical, 2)
     }
 }
 
