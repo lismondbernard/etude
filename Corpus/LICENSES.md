@@ -11,17 +11,19 @@ only.
 | Piece | Corpus file | `.ly` status | Typesetting license | Notes |
 |---|---|---|---|---|
 | Clair de Lune | `clair-de-lune.ly` (+ `.expanded.ly`) | **real, vendored** | Mutopia — public domain (verify header) | Boss fight, issue #1. `\parallelMusic`, cross-staff, nested tuplets. |
-| Minuet in G | `minuet-in-g.ly` | stub | Mutopia — public domain | Full AABB, from prototype `minuet_full.py`. |
-| Prelude in C | `prelude-in-c.ly` | stub | n/a — see note | Prototype exported from **music21 corpus**, not a Mutopia `.ly`. Decide: typeset a simple `.ly`, or keep golden-MIDI-only. |
-| Air on the G String | `air-on-the-g-string.ly` | stub | Mutopia — public domain | Flute + guitar-upper only; bass omitted (edition repeat mismatch). |
+| Minuet in G | `minuet-in-g.ly` | **reconstructed** | Étude typesetting (Apache-2.0); note text via prototype from the Mutopia Bach-Gesellschaft edition (PD — verify header) | Full AABB, voices verbatim from `minuet_full.py`. Pitch-verified against the prototype MIDI, note for note. |
+| Prelude in C | `prelude-in-c.ly` | **generated** | Étude typesetting (Apache-2.0) | DECIDED (action item 3): typeset, mechanically, from the prototype's music21-derived MIDI (music21 corpus encodings of PD scores are BSD-licensed; the note content is PD). Verified tick-exact against that MIDI. Closing ritardando dropped. |
+| Air on the G String | `air-on-the-g-string.ly` | **reconstructed** | Étude typesetting (Apache-2.0); note text via prototype from a Mutopia edition (PD — verify header) | Flute + guitar-upper only; bass omitted (edition repeat mismatch). Written in performed form: repeats play once, first ending only. Fingerings stripped. Partial chord ties sustain (2 fewer notes than prototype MIDI — documented in file). |
 | Gymnopédie No. 1 | `gymnopedie-1.ly` | **reconstructed** | Étude typesetting (Apache-2.0); note text via prototype from a Mutopia edition (PD — verify header) | Not the Mutopia typesetting: performing text rebuilt from `music/gymnopedie.py` streams. Watch BUG-004 ending register. |
 | Gnossienne No. 1 | `gnossienne-1.ly` | **reconstructed** | Note text via prototype from a Mutopia edition its docstring calls **CC-BY-SA** — verify header before repo goes public | English note names; `q` chord-repeat; BUG-005 fragment preserved verbatim. If CC-BY-SA is confirmed to reach the reconstruction, attribute typesetter + share-alike this file. |
-| Winter — Largo | `winter-largo/` | stub (multi-part) | **CC-BY-SA** | Attribution required to redistribute the `.ly`. |
+| Winter — Largo | `winter-largo.ly` | **reconstructed** | Note text via prototype from a Mutopia edition its docstring calls **CC-BY-SA** | Single file, five voices verbatim from `winter.py`, tick-verified against the prototype MIDI. Typesetter name was not recorded by the prototype — recover it from Mutopia and add the attribution string here before the repo goes public (action item 2 still open). Trills play plain. |
 
 ## Action items before replacing any stub with a real `.ly`
 1. Open the Mutopia source, confirm its header license, and record it in the row above.
 2. For **Winter**, add the CC-BY-SA attribution string (typesetter + source URL) here.
-3. For **Prelude in C**, record the final decision (typeset `.ly` vs golden-MIDI-only).
+   **Still open** — the prototype did not record the typesetter's name.
+3. ~~For **Prelude in C**, record the final decision~~ **Done (Phase 3):** typeset as
+   `prelude-in-c.ly`, generated from the prototype MIDI and verified tick-exact.
    Has a downstream consumer — see "Foreign Words marketing assets" below.
 4. Verify each piece's opening-melody fingerprint against PLAN.md Appendix B.
 
