@@ -38,14 +38,15 @@ struct ParseCorpusSourcesTests {
         // 4 themes × 4 lines + the 4 performed arrangements.
         #expect(file.definitions.count == 20)
         #expect(file.score != nil)
-        // The arrangement is 16 references per line.
+        // The arrangement lists 16 theme uses per line; definitions capture by
+        // value, so each is the inlined theme — a relative block.
         guard case .sequence(let melody) = file.definitions["melody"] else {
             Issue.record("melody is not a sequence")
             return
         }
-        let references = melody.compactMap { if case .reference(let name) = $0 { name } else { nil } }
-        #expect(references.count == 16)
-        #expect(references.first == "themeOneMelody")
+        let themes = melody.filter { if case .relative = $0 { true } else { false } }
+        #expect(themes.count == 16)
+        #expect(themes.first == file.definitions["themeOneMelody"])
     }
 
     // MARK: - Helpers
