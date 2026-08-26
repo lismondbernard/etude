@@ -152,6 +152,20 @@ public struct Resolver: Sendable {
                 }
                 state.pendingTies = next
                 state.tick += ticks
+            case .parallel(let children):
+                // All children start together; the longest one carries the
+                // clock forward. The relative context threads through them in
+                // source order — the order a reader meets the notes.
+                state.pendingTies = [:]
+                let start = state.tick
+                var furthest = start
+                for child in children {
+                    state.tick = start
+                    try resolveSequence([child], into: &state)
+                    state.pendingTies = [:]
+                    furthest = max(furthest, state.tick)
+                }
+                state.tick = furthest
             case .tuplet(let numerator, let denominator, let body):
                 // Written durations inside the group scale by the fraction;
                 // the sticky duration itself stays unscaled.
