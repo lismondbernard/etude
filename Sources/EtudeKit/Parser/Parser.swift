@@ -13,6 +13,11 @@ public enum ParseError: Error, Equatable, Sendable {
     case unexpectedEndOfInput
 }
 
+/// A key signature's mode.
+public enum KeyMode: String, Equatable, Sendable, Codable {
+    case major, minor
+}
+
 /// How a `\repeat` block is performed: `volta` plays the body then any
 /// alternative endings; `unfold` writes the body out `count` times.
 public enum RepeatStyle: String, Equatable, Sendable, Codable {
@@ -42,6 +47,7 @@ public indirect enum MusicNode: Equatable, Sendable, Codable {
     /// written pitch, but nothing sounds.
     case pitchedRest(NoteToken)
     case meter(beats: Int, beatUnit: Int)
+    case key(root: NoteToken, mode: KeyMode)
     case tempo(label: String?, beatUnit: Int?, beatsPerMinute: Int?)
     /// A use of a named definition (`\themeOneMelody`). Unresolved here —
     /// binding it to its definition is the Resolver's job, so an unknown name
@@ -290,6 +296,20 @@ public struct Parser: Sendable {
                 return .grace([.note(pitch, tied: false)], acciaccatura: name == "acciaccatura")
             }
             return .grace(try parseBracedBody(tokens, &i), acciaccatura: name == "acciaccatura")
+        case "key":
+            i += 1
+            guard i < tokens.count else { throw ParseError.unexpectedEndOfInput }
+            guard case .note(let root) = tokens[i] else {
+                throw ParseError.unexpectedToken(tokens[i], index: i)
+            }
+            i += 1
+            guard i < tokens.count else { throw ParseError.unexpectedEndOfInput }
+            guard case .command(let modeWord) = tokens[i],
+                  let mode = KeyMode(rawValue: modeWord) else {
+                throw ParseError.unexpectedToken(tokens[i], index: i)
+            }
+            i += 1
+            return .key(root: root, mode: mode)
         case "time":
             i += 1
             let (beats, unit) = try parseFraction(tokens, &i)
