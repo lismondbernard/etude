@@ -110,7 +110,12 @@ public struct Parser: Sendable {
                 score = body.count == 1 ? body[0] : .sequence(body)
             case .identifier(let name) where i + 1 < tokens.count && tokens[i + 1] == .equals:
                 i += 2
-                definitions[name] = try parseExpression(tokens, &i)
+                // Definitions capture by VALUE: references to already-defined
+                // names are substituted now, so a later redefinition of either
+                // name cannot reach back (Clair de Lune's self-appending
+                // `rhUp = {\rhUp …}` depends on this). Unknown names stay
+                // late-bound for the Resolver.
+                definitions[name] = substitute(definitions, in: try parseExpression(tokens, &i))
             case .command("version"), .command("language"), .command("include"):
                 i += 1
                 if i < tokens.count, case .string = tokens[i] {
@@ -121,6 +126,35 @@ public struct Parser: Sendable {
             }
         }
         return LilyFile(header: header, definitions: definitions, score: score)
+    }
+
+    /// Replaces references to known definitions with their captured value.
+    private func substitute(_ definitions: [String: MusicNode], in node: MusicNode) -> MusicNode {
+        func walk(_ node: MusicNode) -> MusicNode {
+            switch node {
+            case .reference(let name):
+                definitions[name] ?? node
+            case .sequence(let body):
+                .sequence(body.map(walk))
+            case .parallel(let children):
+                .parallel(children.map(walk))
+            case .relative(let anchor, let body):
+                .relative(anchor: anchor, body: body.map(walk))
+            case .repeated(let style, let count, let body, let alternatives):
+                .repeated(style, count: count, body: body.map(walk),
+                          alternatives: alternatives.map { $0.map(walk) })
+            case .tuplet(let numerator, let denominator, let body):
+                .tuplet(scaleNumerator: numerator, scaleDenominator: denominator,
+                        body: body.map(walk))
+            case .grace(let body, let acciaccatura):
+                .grace(body.map(walk), acciaccatura: acciaccatura)
+            case .context(let type, let body):
+                .context(type: type, body: walk(body))
+            default:
+                node
+            }
+        }
+        return walk(node)
     }
 
     /// Consumes `{ field = "value" … }` — the metadata block.

@@ -62,6 +62,21 @@ struct ParseFileStructureTests {
         #expect(try makeSUT().parseFile(tokens("theme = { c }")).score == nil)
     }
 
+    @Test("a definition captures earlier definitions by value", .tags(.unit))
+    func eagerSubstitution() throws {
+        // Clair de Lune grows its voices with `rhUp = {\\rhUp ... \\rhUpRed}` --
+        // each redefinition appends to the CAPTURED previous value, so
+        // substitution must happen at definition time, not at resolve time.
+        let file = try makeSUT().parseFile(tokens("theme = { c } theme = { \\theme d }"))
+        #expect(file.definitions["theme"] == .sequence([.sequence([note("c")]), note("d")]))
+    }
+
+    @Test("a reference to a name not yet defined stays late-bound", .tags(.unit))
+    func forwardReference() throws {
+        let file = try makeSUT().parseFile(tokens("melody = { \\coda }"))
+        #expect(file.definitions["melody"] == .sequence([.reference("coda")]))
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> Parser { Parser() }
