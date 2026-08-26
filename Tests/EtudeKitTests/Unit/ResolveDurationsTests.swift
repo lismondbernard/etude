@@ -46,6 +46,28 @@ struct ResolveDurationsTests {
         #expect(try makeSUT().resolve([note("c")]).totalTicks == 480)
     }
 
+    @Test("a written multiplier scales the event's span", .tags(.unit))
+    func durationMultipliers() throws {
+        // Clair de Lune fills whole 9/8 bars with `s8*9` — and pins a hairpin
+        // to a point in time with the zero-width `s8*0`.
+        let resolved = try makeSUT().resolve([
+            .rest(RestToken(kind: .spacer, duration: DurationToken(8, multiplier: (9, 1)))),
+            .rest(RestToken(kind: .spacer, duration: DurationToken(8, multiplier: (0, 1)))),
+            note("c", DurationToken(4, multiplier: (3, 2))),
+        ])
+        #expect(resolved.notes == [ResolvedNote(midiNote: 48, startTick: 2160, durationTicks: 720)])
+        #expect(resolved.totalTicks == 2160 + 720)
+    }
+
+    @Test("the sticky duration carries its multiplier", .tags(.unit))
+    func stickyMultiplier() throws {
+        let resolved = try makeSUT().resolve([
+            .rest(RestToken(kind: .spacer, duration: DurationToken(8, multiplier: (9, 1)))),
+            .rest(RestToken(kind: .spacer)),
+        ])
+        #expect(resolved.totalTicks == 4320)
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> Resolver { Resolver() }

@@ -456,6 +456,6 @@ public struct Resolver: Sendable {
             dotValue /= 2
             base += dotValue
         }
-        return base
+        return base * duration.multiplierNumerator / duration.multiplierDenominator
     }
 }
