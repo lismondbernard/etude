@@ -123,6 +123,18 @@ public struct Parser: Sendable {
             case .chordRepeat(let duration):
                 nodes.append(.chordRepeat(duration: duration))
                 i += 1
+            case .slurOpen, .slurClose, .barCheck:
+                // Engraving punctuation — no performed meaning.
+                i += 1
+            case .command(let name) where Self.engravingCommands.contains(name):
+                i += 1
+            case .command("version"), .command("language"), .command("include"):
+                // Declarations whose string argument the tokenizer has already
+                // acted on (note-name language) or that only matter to LilyPond.
+                i += 1
+                if i < tokens.count, case .string = tokens[i] {
+                    i += 1
+                }
             case .command("alternative"):
                 // Alternative endings are not standalone music — they modify
                 // the repeat that precedes them.
@@ -236,6 +248,16 @@ public struct Parser: Sendable {
         }
         throw ParseError.unexpectedEndOfInput
     }
+
+    /// Engraving-only commands: they shape the printed page, not the
+    /// performance, so the tree drops them.
+    private static let engravingCommands: Set<String> = [
+        "voiceOne", "voiceTwo", "once", "hideNotes",
+        "stemUp", "stemDown", "stemNeutral",
+        "tieUp", "tieDown", "tieNeutral",
+        "slurUp", "slurDown", "phrasingSlurUp", "phrasingSlurDown",
+        "dynamicUp", "dynamicDown", "break", "pageBreak", "noBreak",
+    ]
 
     /// Consumes an `n/d` fraction.
     private func parseFraction(
