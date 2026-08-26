@@ -42,6 +42,48 @@ struct ResolveRepeatsTests {
         ])
     }
 
+    @Test("volta performs body then each alternative in turn", .tags(.unit))
+    func voltaWithAlternatives() throws {
+        // The Gymnopédie shape: volta 2 with two endings = body+first,
+        // body+second.
+        let resolved = try makeSUT().resolve([
+            .relative(anchor: NoteToken(name: "c"), body: [
+                .repeated(.volta, count: 2,
+                          body: [note("g", dur(2, dots: 1)), note("d", dur(2, dots: 1))],
+                          alternatives: [[note("e", dur(2, dots: 1))], [note("f", dur(2, dots: 1))]]),
+            ]),
+        ])
+        #expect(resolved.notes.map(\.midiNote) == [43, 38, 40, 43, 38, 41])
+        #expect(resolved.notes.map(\.startTick) == [0, 1440, 2880, 4320, 5760, 7200])
+        #expect(resolved.totalTicks == 6 * 1440)
+    }
+
+    @Test("each alternative resolves from the body-end context", .tags(.unit))
+    func alternativesShareBodyEndContext() throws {
+        // The second ending's octave placement must come from the body's last
+        // note, not from wherever the first ending wandered.
+        let resolved = try makeSUT().resolve([
+            .relative(anchor: NoteToken(name: "c", octaveMarks: 1), body: [
+                .repeated(.volta, count: 2,
+                          body: [note("c", dur(4))],
+                          alternatives: [[note("g", marks: 1, dur(4))], [note("g", dur(4))]]),
+            ]),
+        ])
+        // Body C4; first ending places g DOWN to G3, the mark lifts it to G4;
+        // the second ending's bare g is G3 again — placed from the body's C4,
+        // NOT from the first ending's G4.
+        #expect(resolved.notes.map(\.midiNote) == [60, 67, 60, 55])
+    }
+
+    @Test("volta without alternatives simply plays the body count times", .tags(.unit))
+    func voltaWithoutAlternatives() throws {
+        let resolved = try makeSUT().resolve([
+            .repeated(.volta, count: 2, body: [note("c", dur(4))], alternatives: []),
+        ])
+        #expect(resolved.notes.map(\.midiNote) == [48, 48])
+        #expect(resolved.totalTicks == 960)
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> Resolver { Resolver() }
