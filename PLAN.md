@@ -470,7 +470,7 @@ later phase inherits them.
 error; all Unit+Regression tests green; `git log` for the phase reads as
 red→green→refactor steps (§0.1).
 
-### Phase 2 — Parser + Resolver
+### Phase 2 — Parser + Resolver (done)
 Event tree, then relative-octave resolution, repeats, tuplets, graces per
 §4.2–4.3. BUG-002/BUG-003 regression tests; the three resolver property tests.
 Enforce the boundary-model rule (§0.4): the LilyPond-shaped tree must not appear
