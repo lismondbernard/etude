@@ -279,6 +279,11 @@ public struct Parser: Sendable {
             return .sequence(try parseBracedBody(tokens, &i))
         case "grace", "acciaccatura":
             i += 1
+            // Braced group, or the single-note form `\grace b8`.
+            if i < tokens.count, case .note(let pitch) = tokens[i] {
+                i += 1
+                return .grace([.note(pitch, tied: false)], acciaccatura: name == "acciaccatura")
+            }
             return .grace(try parseBracedBody(tokens, &i), acciaccatura: name == "acciaccatura")
         case "time":
             i += 1

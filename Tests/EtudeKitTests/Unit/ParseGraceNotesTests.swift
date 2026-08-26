@@ -20,11 +20,20 @@ struct ParseGraceNotesTests {
         ])
     }
 
-    @Test("delivers a typed error on a grace group with no body", .tags(.unit))
+    @Test("delivers a typed error on a grace with nothing to ornament", .tags(.unit))
     func graceWithoutBody() throws {
-        #expect(throws: ParseError.unexpectedToken(.note(NoteToken(name: "b", duration: DurationToken(2))), index: 1)) {
-            try makeSUT().parseMusic(tokens("\\grace b2"))
+        #expect(throws: ParseError.unexpectedToken(.barCheck, index: 1)) {
+            try makeSUT().parseMusic(tokens("\\grace | c"))
         }
+    }
+
+    @Test("parses an unbraced grace as a one-note group", .tags(.unit))
+    func unbracedGrace() throws {
+        // Verbatim shape from the Minuet source: `\grace b8 a2.`
+        #expect(try makeSUT().parseMusic(tokens("\\grace b8 a2.")) == [
+            .grace([note("b", dur(8))], acciaccatura: false),
+            note("a", dur(2, dots: 1)),
+        ])
     }
 
     // MARK: - Helpers
