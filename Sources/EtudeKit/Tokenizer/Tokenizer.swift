@@ -89,6 +89,8 @@ public enum Token: Equatable, Sendable {
     case slash
     case equals
     case string(String)
+    /// A `#…` scheme argument, kept whole: `'damping`, `'(a b)`, `#t`, `3`, `-1`.
+    case scheme(String)
 }
 
 /// Scans LilyPond source text into a flat token stream. Stateless between runs;
@@ -169,6 +171,37 @@ public struct Tokenizer: Sendable {
                     i += 1
                     tokens.append(.chordEnd(duration: try scanDuration(chars, &i)))
                 }
+                continue
+            }
+            if c == "#" {
+                i += 1
+                var payload = ""
+                if i < chars.count, chars[i] == "'" {
+                    payload.append("'")
+                    i += 1
+                }
+                if i < chars.count, chars[i] == "(" {
+                    // A quoted list runs to its closing paren.
+                    while i < chars.count, chars[i] != ")" {
+                        payload.append(chars[i])
+                        i += 1
+                    }
+                    if i < chars.count {
+                        payload.append(")")
+                        i += 1
+                    }
+                } else {
+                    // A symbol, boolean (`#t`), or signed number.
+                    if i < chars.count, chars[i] == "#" || chars[i] == "-" {
+                        payload.append(chars[i])
+                        i += 1
+                    }
+                    while i < chars.count, chars[i].isLetter || chars[i].isNumber {
+                        payload.append(chars[i])
+                        i += 1
+                    }
+                }
+                tokens.append(.scheme(payload))
                 continue
             }
             if c == "%" {
