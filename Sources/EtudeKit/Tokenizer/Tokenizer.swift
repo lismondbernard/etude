@@ -20,7 +20,7 @@ public enum TokenizerError: Error, Equatable, Sendable {
 }
 
 /// A duration as written: the reciprocal note value (`4` = quarter) plus dots.
-public struct DurationToken: Equatable, Sendable {
+public struct DurationToken: Equatable, Sendable, Codable {
     public let value: Int
     public let dots: Int
 
@@ -32,7 +32,7 @@ public struct DurationToken: Equatable, Sendable {
 
 /// A pitch as it appears lexically — one glued word like `fis'4.`, kept whole
 /// because splitting it would lose the guarantee that its parts were adjacent.
-public struct NoteToken: Equatable, Sendable {
+public struct NoteToken: Equatable, Sendable, Codable {
     public let name: String
     /// Net octave adjustment: +1 per `'`, −1 per `,`.
     public let octaveMarks: Int
@@ -54,8 +54,8 @@ public struct NoteToken: Equatable, Sendable {
 }
 
 /// A written rest: `r` (sounding), `s` (spacer), or `R` (multi-measure).
-public struct RestToken: Equatable, Sendable {
-    public enum Kind: Equatable, Sendable {
+public struct RestToken: Equatable, Sendable, Codable {
+    public enum Kind: String, Equatable, Sendable, Codable {
         case sounding, spacer, multiMeasure
     }
 

@@ -1,0 +1,137 @@
+[
+  {
+    "relative" : {
+      "body" : [
+        {
+          "rest" : {
+            "_0" : {
+              "duration" : {
+                "dots" : 0,
+                "value" : 4
+              },
+              "kind" : "sounding"
+            }
+          }
+        },
+        {
+          "note" : {
+            "_0" : {
+              "duration" : {
+                "dots" : 0,
+                "value" : 8
+              },
+              "forcedAccidental" : false,
+              "name" : "c",
+              "octaveMarks" : 2
+            },
+            "tied" : false
+          }
+        },
+        {
+          "note" : {
+            "_0" : {
+              "forcedAccidental" : false,
+              "name" : "ef",
+              "octaveMarks" : 0
+            },
+            "tied" : false
+          }
+        },
+        {
+          "note" : {
+            "_0" : {
+              "duration" : {
+                "dots" : 0,
+                "value" : 4
+              },
+              "forcedAccidental" : false,
+              "name" : "d",
+              "octaveMarks" : 0
+            },
+            "tied" : false
+          }
+        },
+        {
+          "note" : {
+            "_0" : {
+              "forcedAccidental" : false,
+              "name" : "c",
+              "octaveMarks" : 0
+            },
+            "tied" : false
+          }
+        },
+        {
+          "grace" : {
+            "_0" : [
+              {
+                "note" : {
+                  "_0" : {
+                    "duration" : {
+                      "dots" : 0,
+                      "value" : 8
+                    },
+                    "forcedAccidental" : false,
+                    "name" : "c",
+                    "octaveMarks" : 0
+                  },
+                  "tied" : false
+                }
+              }
+            ],
+            "acciaccatura" : false
+          }
+        },
+        {
+          "note" : {
+            "_0" : {
+              "duration" : {
+                "dots" : 0,
+                "value" : 2
+              },
+              "forcedAccidental" : false,
+              "name" : "b",
+              "octaveMarks" : 0
+            },
+            "tied" : false
+          }
+        },
+        {
+          "grace" : {
+            "_0" : [
+              {
+                "note" : {
+                  "_0" : {
+                    "duration" : {
+                      "dots" : 0,
+                      "value" : 8
+                    },
+                    "forcedAccidental" : false,
+                    "name" : "c",
+                    "octaveMarks" : 0
+                  },
+                  "tied" : false
+                }
+              }
+            ],
+            "acciaccatura" : false
+          }
+        },
+        {
+          "note" : {
+            "_0" : {
+              "duration" : {
+                "dots" : 0,
+                "value" : 2
+              },
+              "forcedAccidental" : true,
+              "name" : "b",
+              "octaveMarks" : 0
+            },
+            "tied" : false
+          }
+        }
+      ]
+    }
+  }
+]

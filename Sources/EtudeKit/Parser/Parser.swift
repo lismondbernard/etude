@@ -15,14 +15,14 @@ public enum ParseError: Error, Equatable, Sendable {
 
 /// How a `\repeat` block is performed: `volta` plays the body then any
 /// alternative endings; `unfold` writes the body out `count` times.
-public enum RepeatStyle: String, Equatable, Sendable {
+public enum RepeatStyle: String, Equatable, Sendable, Codable {
     case volta, unfold
 }
 
 /// One node of the LilyPond-shaped parse tree. Pitches are still relative,
 /// repeats unexpanded, tuplet fractions unapplied — resolving all of that is
 /// the Resolver's job, and this shape must not appear past it.
-public indirect enum MusicNode: Equatable, Sendable {
+public indirect enum MusicNode: Equatable, Sendable, Codable {
     case note(NoteToken, tied: Bool)
     case rest(RestToken)
     case chord([NoteToken], duration: DurationToken?, tied: Bool)
