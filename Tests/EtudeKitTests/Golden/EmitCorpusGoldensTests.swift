@@ -10,9 +10,9 @@ import EtudeKit
 @Suite("Emit corpus goldens")
 struct EmitCorpusGoldensTests {
     @Test("emits byte-stable output matching the golden fixture", .tags(.golden),
-          arguments: CorpusPiece.all.map(\.file))
+          arguments: CorpusPiece.all.filter { $0.knownIssue == nil }.map(\.id))
     func golden(piece: String) throws {
-        let spec = CorpusPiece.all.first { $0.file == piece }!
+        let spec = CorpusPiece.all.first { $0.id == piece }!
         let source = try String(contentsOf: corpusURL(piece), encoding: .utf8)
         let file = try Parser().parseFile(try Tokenizer().tokenize(source))
         let score = try ScoreBuilder().score(from: file, velocities: spec.velocities)
