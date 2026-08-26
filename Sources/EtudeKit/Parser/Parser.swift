@@ -31,6 +31,10 @@ public indirect enum MusicNode: Equatable, Sendable {
     case parallel([MusicNode])
     case relative(anchor: NoteToken?, body: [MusicNode])
     case repeated(RepeatStyle, count: Int, body: [MusicNode], alternatives: [[MusicNode]])
+    /// Durations in `body` are scaled by `scaleNumerator/scaleDenominator`.
+    /// `\times 3/2` stores its fraction as written; `\tuplet 3/2` (3 in the
+    /// time of 2) stores the inverse.
+    case tuplet(scaleNumerator: Int, scaleDenominator: Int, body: [MusicNode])
 }
 
 /// Recursive-descent parser over the tokenizer's stream. Stateless between
@@ -141,6 +145,12 @@ public struct Parser: Sendable {
                 i += 1
             }
             return .relative(anchor: anchor, body: try parseBracedBody(tokens, &i))
+        case "times", "tuplet":
+            i += 1
+            let (a, b) = try parseFraction(tokens, &i)
+            let (num, den) = name == "times" ? (a, b) : (b, a)
+            return .tuplet(scaleNumerator: num, scaleDenominator: den,
+                           body: try parseBracedBody(tokens, &i))
         case "repeat":
             i += 1
             guard i < tokens.count else { throw ParseError.unexpectedEndOfInput }
@@ -183,6 +193,28 @@ public struct Parser: Sendable {
             }
         }
         throw ParseError.unexpectedEndOfInput
+    }
+
+    /// Consumes an `n/d` fraction.
+    private func parseFraction(
+        _ tokens: [Token], _ i: inout Int
+    ) throws(ParseError) -> (Int, Int) {
+        guard i < tokens.count else { throw ParseError.unexpectedEndOfInput }
+        guard case .number(let numerator) = tokens[i] else {
+            throw ParseError.unexpectedToken(tokens[i], index: i)
+        }
+        i += 1
+        guard i < tokens.count else { throw ParseError.unexpectedEndOfInput }
+        guard tokens[i] == .slash else {
+            throw ParseError.unexpectedToken(tokens[i], index: i)
+        }
+        i += 1
+        guard i < tokens.count else { throw ParseError.unexpectedEndOfInput }
+        guard case .number(let denominator) = tokens[i] else {
+            throw ParseError.unexpectedToken(tokens[i], index: i)
+        }
+        i += 1
+        return (numerator, denominator)
     }
 
     /// Consumes a required `{ … }` group and returns its contents.
