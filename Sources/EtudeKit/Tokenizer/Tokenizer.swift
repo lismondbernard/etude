@@ -94,6 +94,8 @@ public enum Token: Equatable, Sendable {
     case slash
     case equals
     case string(String)
+    /// A written duration standing apart from its note (`<f af> 4.`).
+    case duration(DurationToken)
     /// A `#…` scheme argument, kept whole: `'damping`, `'(a b)`, `#t`, `3`, `-1`.
     case scheme(String)
 }
@@ -260,6 +262,15 @@ public struct Tokenizer: Sendable {
                 guard let value = Int(digits) else {
                     let (line, column) = location(of: start, in: chars)
                     throw TokenizerError.malformedNumber(line: line, column: column)
+                }
+                // Dots or a multiplier make this a free-standing duration;
+                // a bare integer stays a number (meters, counts, tempo).
+                if i < chars.count, chars[i] == "." || chars[i] == "*" {
+                    i = start
+                    if let duration = try scanDuration(chars, &i) {
+                        tokens.append(.duration(duration))
+                        continue
+                    }
                 }
                 tokens.append(.number(value))
                 continue

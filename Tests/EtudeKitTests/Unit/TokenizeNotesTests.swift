@@ -110,6 +110,23 @@ struct TokenizeNotesTests {
         ])
     }
 
+    @Test("lexes a separated dotted duration as a duration token", .tags(.unit))
+    func separatedDuration() throws {
+        let sut = makeSUT()
+        // Verbatim shape from Clair de Lune: `<f af> ~ <f af> 4.` — the
+        // written value stands apart from the chord it times. A bare integer
+        // stays a number (meters and metronome marks need it).
+        #expect(try sut.tokenize("<f a> 4. c 4") == [
+            .chordStart,
+            .note(NoteToken(name: "f")),
+            .note(NoteToken(name: "a")),
+            .chordEnd(duration: nil),
+            .duration(DurationToken(4, dots: 1)),
+            .note(NoteToken(name: "c")),
+            .number(4),
+        ])
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> Tokenizer { Tokenizer() }
