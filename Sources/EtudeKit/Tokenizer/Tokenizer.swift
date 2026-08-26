@@ -140,7 +140,19 @@ public struct Tokenizer: Sendable {
                     name.append(chars[i])
                     i += 1
                 }
+                // A backslash before a non-letter is an expressive mark —
+                // phrasing slur `\(`/`\)`, hairpin `\<`/`\>`, or end `\!` —
+                // which shapes dynamics on the page, not the note stream.
+                if name.isEmpty {
+                    if i < chars.count { i += 1 }
+                    continue
+                }
                 tokens.append(.command(name))
+                continue
+            }
+            if c == "-", i + 1 < chars.count, "-.>^_+".contains(chars[i + 1]) {
+                // Articulation shorthand (tenuto `--`, staccato `-.`, …).
+                i += 2
                 continue
             }
             if c == "<" {

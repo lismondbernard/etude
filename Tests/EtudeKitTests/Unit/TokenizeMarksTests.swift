@@ -47,6 +47,25 @@ struct TokenizeMarksTests {
         ])
     }
 
+    @Test("lexes phrasing slurs, hairpins, and articulation shorthands to nothing", .tags(.unit))
+    func expressiveMarks() throws {
+        let sut = makeSUT()
+        // Verbatim shapes from Clair de Lune: `df16\( af'`, `s8*0\!`,
+        // `<f gf bf>--~`, `r8\pp\<`.
+        #expect(try sut.tokenize("des16\\( aes \\) c\\< d\\! <e g>-- f-. g->") == [
+            .note(NoteToken(name: "des", duration: DurationToken(16))),
+            .note(NoteToken(name: "aes")),
+            .note(NoteToken(name: "c")),
+            .note(NoteToken(name: "d")),
+            .chordStart,
+            .note(NoteToken(name: "e")),
+            .note(NoteToken(name: "g")),
+            .chordEnd(duration: nil),
+            .note(NoteToken(name: "f")),
+            .note(NoteToken(name: "g")),
+        ])
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> Tokenizer { Tokenizer() }
