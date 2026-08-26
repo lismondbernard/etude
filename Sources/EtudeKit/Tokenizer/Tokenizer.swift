@@ -19,14 +19,19 @@ public enum TokenizerError: Error, Equatable, Sendable {
     case malformedNumber(line: Int, column: Int)
 }
 
-/// A duration as written: the reciprocal note value (`4` = quarter) plus dots.
+/// A duration as written: the reciprocal note value (`4` = quarter) plus dots,
+/// optionally scaled by a written multiplier fraction (`s8*9`, `s2.*9/6`).
 public struct DurationToken: Equatable, Sendable, Codable {
     public let value: Int
     public let dots: Int
+    public let multiplierNumerator: Int
+    public let multiplierDenominator: Int
 
-    public init(_ value: Int, dots: Int = 0) {
+    public init(_ value: Int, dots: Int = 0, multiplier: (Int, Int) = (1, 1)) {
         self.value = value
         self.dots = dots
+        self.multiplierNumerator = multiplier.0
+        self.multiplierDenominator = multiplier.1
     }
 }
 
@@ -370,6 +375,34 @@ public struct Tokenizer: Sendable {
             dots += 1
             i += 1
         }
-        return DurationToken(value, dots: dots)
+        var multiplier = (1, 1)
+        if i < chars.count, chars[i] == "*" {
+            i += 1
+            var numerator = ""
+            while i < chars.count, chars[i].isNumber {
+                numerator.append(chars[i])
+                i += 1
+            }
+            guard let n = Int(numerator) else {
+                let (line, column) = location(of: start, in: chars)
+                throw TokenizerError.malformedNumber(line: line, column: column)
+            }
+            var d = 1
+            if i < chars.count, chars[i] == "/" {
+                i += 1
+                var denominator = ""
+                while i < chars.count, chars[i].isNumber {
+                    denominator.append(chars[i])
+                    i += 1
+                }
+                guard let dd = Int(denominator) else {
+                    let (line, column) = location(of: start, in: chars)
+                    throw TokenizerError.malformedNumber(line: line, column: column)
+                }
+                d = dd
+            }
+            multiplier = (n, d)
+        }
+        return DurationToken(value, dots: dots, multiplier: multiplier)
     }
 }

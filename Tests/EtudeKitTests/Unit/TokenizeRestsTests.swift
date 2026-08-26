@@ -24,6 +24,17 @@ struct TokenizeRestsTests {
         ])
     }
 
+    @Test("scans a duration multiplier on a spacer", .tags(.unit))
+    func durationMultipliers() throws {
+        let sut = makeSUT()
+        // Verbatim shapes from Clair de Lune: `s8*9`, `s2.*9/6`, `s8*0`.
+        #expect(try sut.tokenize("s8*9 s2.*9/6 s8*0") == [
+            .rest(RestToken(kind: .spacer, duration: DurationToken(8, multiplier: (9, 1)))),
+            .rest(RestToken(kind: .spacer, duration: DurationToken(2, dots: 1, multiplier: (9, 6)))),
+            .rest(RestToken(kind: .spacer, duration: DurationToken(8, multiplier: (0, 1)))),
+        ])
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> Tokenizer { Tokenizer() }
