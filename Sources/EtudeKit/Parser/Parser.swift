@@ -556,6 +556,7 @@ public struct Parser: Sendable {
         // Per-note effects and engraving toggles.
         "arpeggio", "sustainOn", "sustainOff", "slurNeutral",
         "mergeDifferentlyDottedOn", "mergeDifferentlyHeadedOn",
+        "unHideNotes", "newSpacingSection", "dimTextDim",
     ]
 
     /// Consumes an `n/d` fraction.

@@ -36,6 +36,7 @@ struct ParseEngravingSkipsTests {
         "pp", "ppp", "p", "mp", "mf", "f", "ff", "fff", "sf",
         "arpeggio", "sustainOn", "sustainOff", "slurNeutral",
         "mergeDifferentlyDottedOn", "mergeDifferentlyHeadedOn",
+        "unHideNotes", "newSpacingSection", "dimTextDim",
     ])
     func dynamicsAndEffects(command: String) throws {
         #expect(try makeSUT().parseMusic(tokens("c \\\(command) d")) == [
