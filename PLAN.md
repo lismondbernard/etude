@@ -498,12 +498,13 @@ Lune under `withKnownIssue`; write `docs/lessons/` entries for all six bugs.
 issue is narrower than planned: §7's alignment problem is SOLVED; what remains
 on record is lhDown register drift, GitHub issue #1.)*
 
-### Phase 5 — App MVP + UI tests
+### Phase 5 — App MVP + UI tests (done)
 Screens per §8, page objects, the three UI test flows, accessibility identifiers
 throughout. View models built against a `PieceBuilding` spy first (§0.3); leak
 tracking in every app-layer `makeSUT()` (§0.6).
 **Accept:** UI tests green on simulator; export produces a `.mid` that GarageBand
-opens (manual check).
+opens (manual check). *(UI tests green on iPhone 17 Pro / iOS 26.2; the
+GarageBand open remains a manual checklist item before shipping.)*
 
 ### Phase 6 — Polish for store + course
 App icon, credits/licenses screen, README course map ("which test to read first"),
