@@ -24,8 +24,11 @@ every piece was compared to the prototype MIDI at pitch level first:
   to a 32nd), and the hidden ossia voice sounds (hideNotes is engraving-only),
   adding 14 accompaniment notes.
 
-`clair-de-lune.mid` is still the prototype's output — the boss fight re-baselines in
-Phase 4 (known issue #1).
+**Provenance (Phase 4):** `clair-de-lune.mid` is now also the Swift writer's output —
+the boss fight's KNOWN-ISSUE rendering: all four voices align at 72 bars of 9/8 (which
+the prototype never achieved), but lhDown carries sub-piano register drift in bars
+8–13/22–24/63–65 (issue #1). The golden pins that rendering so any change to it is a
+loud, reviewed event, per ADR-0003.
 
 | Fixture | Piece | Prototype BPM |
 |---|---|---|
