@@ -64,6 +64,9 @@ public struct Resolver: Sendable {
         /// LilyPond's sticky duration: an event with no written duration lasts
         /// as long as the previous one. A quarter before anything is written.
         var lastDuration = DurationToken(4)
+        /// The pitch each relative note is placed against; `nil` outside a
+        /// `\relative` block (absolute mode).
+        var reference: (letter: Int, octave: Int)?
 
         mutating func ticks(for written: DurationToken?) -> Int {
             if let written { lastDuration = written }
@@ -77,11 +80,18 @@ public struct Resolver: Sendable {
         for node in music {
             switch node {
             case .note(let noteToken, _):
-                let midi = try midiNote(of: noteToken)
+                let midi = try midiNote(of: noteToken, in: &state)
                 let ticks = state.ticks(for: noteToken.duration)
                 state.notes.append(
                     ResolvedNote(midiNote: midi, startTick: state.tick, durationTicks: ticks))
                 state.tick += ticks
+            case .relative(let anchor, let body):
+                let outer = state.reference
+                let anchorNote = anchor ?? NoteToken(name: "f")
+                let (letter, _) = try spelledPitch(anchorNote.name)
+                state.reference = (letter, 3 + anchorNote.octaveMarks)
+                try resolveSequence(body, into: &state)
+                state.reference = outer
             case .rest(let restToken):
                 // Sounding, spacer, or multi-measure: performed identically —
                 // silence for the written span.
@@ -98,10 +108,25 @@ public struct Resolver: Sendable {
     private static let letterOffsets = [0, 2, 4, 5, 7, 9, 11]
     private static let letters: [Character] = ["c", "d", "e", "f", "g", "a", "b"]
 
-    private func midiNote(of noteToken: NoteToken) throws(ResolveError) -> Int {
+    /// Pitches the note in the current mode and, in relative mode, moves the
+    /// reference to the resulting pitch.
+    private func midiNote(of noteToken: NoteToken, in state: inout State) throws(ResolveError) -> Int {
         let (letter, alteration) = try spelledPitch(noteToken.name)
-        // Absolute mode: a bare letter sits in the octave below middle C.
-        return 48 + Self.letterOffsets[letter] + alteration + 12 * noteToken.octaveMarks
+        let octave: Int
+        if let reference = state.reference {
+            // Within a fourth of the reference, counted in letters — never in
+            // semitones, so alterations cannot move the placement.
+            var placed = reference.octave
+            let letterDistance = letter - reference.letter
+            if letterDistance > 3 { placed -= 1 }
+            if letterDistance < -3 { placed += 1 }
+            octave = placed + noteToken.octaveMarks
+            state.reference = (letter, octave)
+        } else {
+            // Absolute mode: a bare letter sits in the octave below middle C.
+            octave = 3 + noteToken.octaveMarks
+        }
+        return 12 * (octave + 1) + Self.letterOffsets[letter] + alteration
     }
 
     /// Splits a written name into letter index and alteration in semitones.
