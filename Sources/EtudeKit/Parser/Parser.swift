@@ -47,6 +47,10 @@ public indirect enum MusicNode: Equatable, Sendable {
     /// binding it to its definition is the Resolver's job, so an unknown name
     /// fails loudly there rather than silently at parse time.
     case reference(String)
+    /// A `\new <Type>` wrapper (Staff, Voice, PianoStaff) around one music
+    /// expression. Voice/staff STRUCTURE is interpreted from these when the
+    /// score is assembled; inside a melody line they group like braces.
+    case context(type: String, body: MusicNode)
 }
 
 /// Recursive-descent parser over the tokenizer's stream. Stateless between
@@ -180,6 +184,14 @@ public struct Parser: Sendable {
             let (num, den) = name == "times" ? (a, b) : (b, a)
             return .tuplet(scaleNumerator: num, scaleDenominator: den,
                            body: try parseBracedBody(tokens, &i))
+        case "new":
+            i += 1
+            guard i < tokens.count else { throw ParseError.unexpectedEndOfInput }
+            guard case .identifier(let contextType) = tokens[i] else {
+                throw ParseError.unexpectedToken(tokens[i], index: i)
+            }
+            i += 1
+            return .context(type: contextType, body: try parseExpression(tokens, &i))
         case "grace", "acciaccatura":
             i += 1
             return .grace(try parseBracedBody(tokens, &i), acciaccatura: name == "acciaccatura")
@@ -286,6 +298,26 @@ public struct Parser: Sendable {
         }
         i += 1
         return (numerator, denominator)
+    }
+
+    /// Parses exactly one music expression — a braced sequence, a parallel
+    /// group, or a command form (reference, relative block, …).
+    private func parseExpression(
+        _ tokens: [Token], _ i: inout Int
+    ) throws(ParseError) -> MusicNode {
+        guard i < tokens.count else { throw ParseError.unexpectedEndOfInput }
+        switch tokens[i] {
+        case .braceOpen:
+            i += 1
+            return .sequence(try parseSequence(tokens, &i, endingAt: .braceClose))
+        case .parallelStart:
+            i += 1
+            return .parallel(try parseSequence(tokens, &i, endingAt: .parallelEnd))
+        case .command(let name):
+            return try parseCommand(name, tokens, &i)
+        default:
+            throw ParseError.unexpectedToken(tokens[i], index: i)
+        }
     }
 
     /// Consumes a required `{ … }` group and returns its contents.

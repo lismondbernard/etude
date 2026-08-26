@@ -58,6 +58,32 @@ struct ParseGroupsTests {
         }
     }
 
+    @Test("parses a new context wrapping its music", .tags(.unit))
+    func newContext() throws {
+        // Verbatim shape from the Gnossienne ossia: `\new Voice{\voiceOne … }`
+        #expect(try makeSUT().parseMusic(tokens("\\new Voice { c }")) == [
+            .context(type: "Voice", body: .sequence([note("c")])),
+        ])
+    }
+
+    @Test("a new context may wrap a reference or parallel music", .tags(.unit))
+    func newContextForms() throws {
+        // Verbatim shape from the Gymnopédie score block.
+        #expect(try makeSUT().parseMusic(tokens("\\new Staff \\melody \\new Staff << \\new Voice \\bass >>")) == [
+            .context(type: "Staff", body: .reference("melody")),
+            .context(type: "Staff", body: .parallel([
+                .context(type: "Voice", body: .reference("bass")),
+            ])),
+        ])
+    }
+
+    @Test("delivers a typed error on \\new with no context type", .tags(.unit))
+    func newWithoutType() throws {
+        #expect(throws: ParseError.unexpectedToken(.braceOpen, index: 1)) {
+            try makeSUT().parseMusic(tokens("\\new { c }"))
+        }
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> Parser { Parser() }
