@@ -229,8 +229,20 @@ public struct Tokenizer: Sendable {
                 continue
             }
             if c == "%" {
-                while i < chars.count, !chars[i].isNewline {
-                    i += 1
+                // `%{ … %}` is a block comment ending at its closing mark —
+                // music may continue on the same line. A bare `%` runs to the
+                // end of the line.
+                if i + 1 < chars.count, chars[i + 1] == "{" {
+                    i += 2
+                    while i < chars.count,
+                          !(chars[i] == "%" && i + 1 < chars.count && chars[i + 1] == "}") {
+                        i += 1
+                    }
+                    i = min(i + 2, chars.count)
+                } else {
+                    while i < chars.count, !chars[i].isNewline {
+                        i += 1
+                    }
                 }
                 continue
             }

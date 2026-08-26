@@ -68,6 +68,18 @@ struct TokenizeCommandsTests {
         ])
     }
 
+    @Test("a block comment ends at its closing mark, not the line", .tags(.unit))
+    func blockComment() throws {
+        let sut = makeSUT()
+        // Verbatim shape from Clair de Lune: `%{ %} <ef bf' ef>-- …` — music
+        // follows the comment ON THE SAME LINE and must survive.
+        #expect(try sut.tokenize("%{ hidden %} c4 %{ multi\nline %} d % line\ne") == [
+            .note(NoteToken(name: "c", duration: DurationToken(4))),
+            .note(NoteToken(name: "d")),
+            .note(NoteToken(name: "e")),
+        ])
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> Tokenizer { Tokenizer() }
