@@ -264,13 +264,18 @@ public struct Parser: Sendable {
             let (num, den) = name == "times" ? (a, b) : (b, a)
             return .tuplet(scaleNumerator: num, scaleDenominator: den,
                            body: try parseBracedBody(tokens, &i))
-        case "new":
+        case "new", "context":
             i += 1
             guard i < tokens.count else { throw ParseError.unexpectedEndOfInput }
             guard case .identifier(let contextType) = tokens[i] else {
                 throw ParseError.unexpectedToken(tokens[i], index: i)
             }
             i += 1
+            // An engraving name (`= "ii"`) distinguishes printed contexts;
+            // performance does not need it.
+            if i + 1 < tokens.count, tokens[i] == .equals, case .string = tokens[i + 1] {
+                i += 2
+            }
             return .context(type: contextType, body: try parseExpression(tokens, &i))
         case "crossStaff":
             // Engraving hint about which staff prints the notes; its braces

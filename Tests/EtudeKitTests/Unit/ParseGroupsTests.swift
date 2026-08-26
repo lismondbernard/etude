@@ -84,6 +84,22 @@ struct ParseGroupsTests {
         }
     }
 
+    @Test("parses a named context, discarding the engraving name", .tags(.unit))
+    func namedContext() throws {
+        // Verbatim shape from the Minuet source: `\context Voice = "ii" { … }`
+        #expect(try makeSUT().parseMusic(tokens("\\context Voice = \"ii\" { c }")) == [
+            .context(type: "Voice", body: .sequence([note("c")])),
+        ])
+    }
+
+    @Test("a named new context parses the same way", .tags(.unit))
+    func namedNewContext() throws {
+        // Clair de Lune's shape: `\new Staff = "upper" { … }`
+        #expect(try makeSUT().parseMusic(tokens("\\new Staff = \"upper\" { c }")) == [
+            .context(type: "Staff", body: .sequence([note("c")])),
+        ])
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> Parser { Parser() }
