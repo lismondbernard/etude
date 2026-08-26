@@ -117,6 +117,10 @@ public struct Tokenizer: Sendable {
             let c = chars[i]
             if c.isWhitespace || Self.engravingNoise.contains(c) {
                 i += 1
+                // An attach mark carries its articulation with it: `_-`, `^.`.
+                if (c == "^" || c == "_"), i < chars.count, "-.>^_+".contains(chars[i]) {
+                    i += 1
+                }
                 continue
             }
             if c.isLetter {

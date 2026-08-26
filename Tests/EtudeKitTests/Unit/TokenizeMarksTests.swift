@@ -52,7 +52,8 @@ struct TokenizeMarksTests {
         let sut = makeSUT()
         // Verbatim shapes from Clair de Lune: `df16\( af'`, `s8*0\!`,
         // `<f gf bf>--~`, `r8\pp\<`.
-        #expect(try sut.tokenize("des16\\( aes \\) c\\< d\\! <e g>-- f-. g->") == [
+        // …and Clair de Lune's `f2._-` — a tenuto dash riding an attach mark.
+        #expect(try sut.tokenize("des16\\( aes \\) c\\< d\\! <e g>-- f-. g-> a2._-") == [
             .note(NoteToken(name: "des", duration: DurationToken(16))),
             .note(NoteToken(name: "aes")),
             .note(NoteToken(name: "c")),
@@ -63,6 +64,7 @@ struct TokenizeMarksTests {
             .chordEnd(duration: nil),
             .note(NoteToken(name: "f")),
             .note(NoteToken(name: "g")),
+            .note(NoteToken(name: "a", duration: DurationToken(2, dots: 1))),
         ])
     }
 
