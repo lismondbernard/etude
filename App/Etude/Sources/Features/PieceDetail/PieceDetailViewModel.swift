@@ -21,6 +21,10 @@ final class PieceDetailViewModel {
 
     private(set) var phase: BuildPhase = .idle
     private(set) var builtPiece: BuiltPiece?
+    /// Mirrored from the player as a STORED property so SwiftUI observes it —
+    /// the player itself is behind a protocol and invisible to Observation
+    /// (a bug the UI tests caught that the unit tests could not).
+    private(set) var isPlaying = false
     /// Nil until the user moves the slider — the piece's own tempo governs.
     private(set) var tempoOverride: Int?
 
@@ -33,7 +37,6 @@ final class PieceDetailViewModel {
     var tracks: [Voice] { builtPiece?.score.voices ?? [] }
     var findings: [ValidationFinding] { builtPiece?.findings ?? [] }
     var canPlay: Bool { phase == .built }
-    var isPlaying: Bool { player.isPlaying }
     var tempoBeatsPerMinute: Int {
         tempoOverride ?? builtPiece?.score.tempo?.beatsPerMinute ?? 120
     }
@@ -41,6 +44,7 @@ final class PieceDetailViewModel {
     func build() async {
         phase = .building
         player.pause()
+        isPlaying = false
         do {
             let built = try await builder.build(piece, tempoBeatsPerMinute: tempoOverride)
             builtPiece = built
@@ -55,6 +59,7 @@ final class PieceDetailViewModel {
     func togglePlayback() {
         guard canPlay else { return }
         isPlaying ? player.pause() : player.play()
+        isPlaying = player.isPlaying
     }
 
     /// The tempo slider commits here: remember the override and rebuild the
