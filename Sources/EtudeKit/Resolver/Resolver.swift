@@ -14,6 +14,7 @@
 public enum ResolveError: Error, Equatable, Sendable {
     case unknownPitchName(String)
     case chordRepeatWithoutChord
+    case unknownReference(String)
     /// A tree shape the resolver does not (yet) perform — failing loudly beats
     /// skipping music (ADR-0001 territory: silence hides wrongness).
     case unsupportedNode(String)
@@ -51,8 +52,11 @@ public struct ResolvedMusic: Equatable, Sendable {
 public struct Resolver: Sendable {
     public init() {}
 
-    public func resolve(_ music: [MusicNode]) throws(ResolveError) -> ResolvedMusic {
+    public func resolve(
+        _ music: [MusicNode], definitions: [String: MusicNode] = [:]
+    ) throws(ResolveError) -> ResolvedMusic {
         var state = State()
+        state.definitions = definitions
         try resolveSequence(music, into: &state)
         return ResolvedMusic(notes: state.notes, totalTicks: state.tick)
     }
@@ -96,6 +100,8 @@ public struct Resolver: Sendable {
         /// the debt they are creating.
         var inGraceBody = false
 
+        /// Named definitions a `.reference` may inline.
+        var definitions: [String: MusicNode] = [:]
         /// The tuplet scale in force, as a fraction (numerator, denominator).
         var tupletScale = (numerator: 1, denominator: 1)
 
@@ -152,6 +158,11 @@ public struct Resolver: Sendable {
                 }
                 state.pendingTies = next
                 state.tick += ticks
+            case .reference(let name):
+                guard let definition = state.definitions[name] else {
+                    throw ResolveError.unknownReference(name)
+                }
+                try resolveSequence([definition], into: &state)
             case .parallel(let children):
                 // All children start together; the longest one carries the
                 // clock forward. The relative context threads through them in
