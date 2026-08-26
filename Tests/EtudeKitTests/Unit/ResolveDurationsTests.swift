@@ -30,6 +30,22 @@ struct ResolveDurationsTests {
         #expect(resolved.totalTicks == 480 + 480 + 480 + 1440)
     }
 
+    @Test("carries the previous duration when a note writes none", .tags(.unit))
+    func stickyDuration() throws {
+        // Verbatim shape from the Gymnopédie melody: `s4 fis( a g fis …`
+        let resolved = try makeSUT().resolve([
+            .rest(RestToken(kind: .spacer, duration: dur(4))),
+            note("fis"), note("a", dur(2)), note("g"),
+        ])
+        #expect(resolved.notes.map(\.durationTicks) == [480, 960, 960])
+        #expect(resolved.totalTicks == 480 + 480 + 960 + 960)
+    }
+
+    @Test("an unwritten duration at the very start is a quarter", .tags(.unit))
+    func defaultDuration() throws {
+        #expect(try makeSUT().resolve([note("c")]).totalTicks == 480)
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> Resolver { Resolver() }

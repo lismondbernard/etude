@@ -61,6 +61,14 @@ public struct Resolver: Sendable {
     private struct State {
         var notes: [ResolvedNote] = []
         var tick = 0
+        /// LilyPond's sticky duration: an event with no written duration lasts
+        /// as long as the previous one. A quarter before anything is written.
+        var lastDuration = DurationToken(4)
+
+        mutating func ticks(for written: DurationToken?) -> Int {
+            if let written { lastDuration = written }
+            return Resolver.ticks(of: lastDuration)
+        }
     }
 
     private func resolveSequence(
@@ -70,14 +78,14 @@ public struct Resolver: Sendable {
             switch node {
             case .note(let noteToken, _):
                 let midi = try midiNote(of: noteToken)
-                let ticks = ticks(of: noteToken.duration ?? DurationToken(4))
+                let ticks = state.ticks(for: noteToken.duration)
                 state.notes.append(
                     ResolvedNote(midiNote: midi, startTick: state.tick, durationTicks: ticks))
                 state.tick += ticks
             case .rest(let restToken):
                 // Sounding, spacer, or multi-measure: performed identically —
                 // silence for the written span.
-                state.tick += ticks(of: restToken.duration ?? DurationToken(4))
+                state.tick += state.ticks(for: restToken.duration)
             default:
                 throw ResolveError.unsupportedNode("\(node)")
             }
@@ -132,7 +140,7 @@ public struct Resolver: Sendable {
 
     // MARK: - Time
 
-    private func ticks(of duration: DurationToken) -> Int {
+    private static func ticks(of duration: DurationToken) -> Int {
         var base = ResolvedMusic.ticksPerQuarter * 4 / duration.value
         var dotValue = base
         for _ in 0..<duration.dots {
