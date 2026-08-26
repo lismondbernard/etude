@@ -136,6 +136,26 @@ public struct Resolver: Sendable {
                 }
                 state.pendingTies = next
                 state.tick += ticks
+            case .repeated(.unfold, let count, let body, _):
+                // Resolve the body ONCE, then copy the resolved events — the
+                // relative context must never re-thread through repetitions
+                // (BUG-002).
+                state.pendingTies = [:]
+                let firstEvent = state.notes.count
+                let bodyStart = state.tick
+                try resolveSequence(body, into: &state)
+                state.pendingTies = [:]
+                let bodyEvents = Array(state.notes[firstEvent...])
+                let span = state.tick - bodyStart
+                for pass in 1..<max(count, 1) {
+                    let offset = pass * span
+                    state.notes.append(contentsOf: bodyEvents.map {
+                        ResolvedNote(midiNote: $0.midiNote,
+                                     startTick: $0.startTick + offset,
+                                     durationTicks: $0.durationTicks)
+                    })
+                }
+                state.tick = bodyStart + max(count, 1) * span
             case .sequence(let body):
                 // Pure grouping (bare braces, crossStaff): time and context
                 // flow straight through (BUG-003).
