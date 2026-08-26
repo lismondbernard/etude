@@ -77,6 +77,16 @@ struct ParseFileStructureTests {
         #expect(file.definitions["melody"] == .sequence([.reference("coda")]))
     }
 
+    @Test("a definition may be one bare event with its pedal marks", .tags(.unit))
+    func bareEventDefinition() throws {
+        // Verbatim shape from Clair de Lune's prelude: `sd = s8\\sustainOn`,
+        // `sv = s8\\sustainOff\\sustainOn`.
+        let file = try makeSUT().parseFile(tokens(
+            "sd = s8\\sustainOn sv = s8\\sustainOff\\sustainOn"))
+        #expect(file.definitions["sd"] == .rest(RestToken(kind: .spacer, duration: dur(8))))
+        #expect(file.definitions["sv"] == .rest(RestToken(kind: .spacer, duration: dur(8))))
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> Parser { Parser() }

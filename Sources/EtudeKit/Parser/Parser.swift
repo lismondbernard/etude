@@ -595,8 +595,30 @@ public struct Parser: Sendable {
             return .parallel(try parseSequence(tokens, &i, endingAt: .parallelEnd))
         case .command(let name):
             return try parseCommand(name, tokens, &i)
+        case .note(let noteToken):
+            // A bare event can stand as an expression (`sd = s8\sustainOn`);
+            // engraving commands riding on it are dropped as usual.
+            i += 1
+            var node: MusicNode = .note(noteToken, tied: false)
+            if i < tokens.count, tokens[i] == .command("rest") {
+                node = .pitchedRest(noteToken)
+                i += 1
+            }
+            skipTrailingEngraving(tokens, &i)
+            return node
+        case .rest(let restToken):
+            i += 1
+            skipTrailingEngraving(tokens, &i)
+            return .rest(restToken)
         default:
             throw ParseError.unexpectedToken(tokens[i], index: i)
+        }
+    }
+
+    private func skipTrailingEngraving(_ tokens: [Token], _ i: inout Int) {
+        while i < tokens.count, case .command(let name) = tokens[i],
+              Self.engravingCommands.contains(name) {
+            i += 1
         }
     }
 
