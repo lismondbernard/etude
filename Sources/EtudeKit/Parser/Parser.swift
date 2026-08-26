@@ -35,6 +35,9 @@ public indirect enum MusicNode: Equatable, Sendable {
     /// `\times 3/2` stores its fraction as written; `\tuplet 3/2` (3 in the
     /// time of 2) stores the inverse.
     case tuplet(scaleNumerator: Int, scaleDenominator: Int, body: [MusicNode])
+    /// Ornamental notes that steal time from the note that follows the group;
+    /// an acciaccatura is played very short regardless of written duration.
+    case grace([MusicNode], acciaccatura: Bool)
 }
 
 /// Recursive-descent parser over the tokenizer's stream. Stateless between
@@ -151,6 +154,9 @@ public struct Parser: Sendable {
             let (num, den) = name == "times" ? (a, b) : (b, a)
             return .tuplet(scaleNumerator: num, scaleDenominator: den,
                            body: try parseBracedBody(tokens, &i))
+        case "grace", "acciaccatura":
+            i += 1
+            return .grace(try parseBracedBody(tokens, &i), acciaccatura: name == "acciaccatura")
         case "repeat":
             i += 1
             guard i < tokens.count else { throw ParseError.unexpectedEndOfInput }
