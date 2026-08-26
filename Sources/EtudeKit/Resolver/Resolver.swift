@@ -15,6 +15,8 @@ public enum ResolveError: Error, Equatable, Sendable {
     case unknownPitchName(String)
     case chordRepeatWithoutChord
     case unknownReference(String)
+    case ornamentWithoutKey
+    case ornamentWithoutNote
     /// A tree shape the resolver does not (yet) perform — failing loudly beats
     /// skipping music (ADR-0001 territory: silence hides wrongness).
     case unsupportedNode(String)
@@ -144,6 +146,12 @@ public struct Resolver: Sendable {
 
         var meter: Meter?
         var tempo: TempoMark?
+        /// Scale pitch classes from the key signature — the lattice ornament
+        /// neighbors walk on.
+        var scale: Set<Int>?
+        /// Index of the last event, when it was a lone note an ornament could
+        /// sit on.
+        var lastSingleNote: Int?
         /// Named definitions a `.reference` may inline.
         var definitions: [String: MusicNode] = [:]
         /// The tuplet scale in force, as a fraction (numerator, denominator).
@@ -172,6 +180,7 @@ public struct Resolver: Sendable {
                 var next: [Int: Int] = [:]
                 state.sound(midi, ticks: ticks, tiedOnward: tied, into: &next)
                 state.pendingTies = next
+                state.lastSingleNote = state.notes.count - 1
                 state.tick += ticks
             case .chord(let pitches, let duration, let tied):
                 let ticks = state.ticks(for: duration)
@@ -190,6 +199,7 @@ public struct Resolver: Sendable {
                 state.pendingTies = next
                 if let firstReference { state.reference = firstReference }
                 state.lastChord = sounded
+                state.lastSingleNote = nil
                 state.tick += ticks
             case .chordRepeat(let duration):
                 guard let chord = state.lastChord else {
@@ -202,6 +212,36 @@ public struct Resolver: Sendable {
                 }
                 state.pendingTies = next
                 state.tick += ticks
+            case .key(let root, let mode):
+                let (letter, alteration) = try spelledPitch(root.name)
+                let tonic = Self.letterOffsets[letter] + alteration
+                let steps = mode == .major ? [0, 2, 4, 5, 7, 9, 11] : [0, 2, 3, 5, 7, 8, 10]
+                state.scale = Set(steps.map { ($0 + tonic + 12) % 12 })
+            case .ornament(let kind):
+                // Performed in the prototype's proven shape: principal and
+                // neighbor at a quarter of the note each, principal again for
+                // the remaining half. The neighbor is the nearest scale tone.
+                guard let scale = state.scale else { throw ResolveError.ornamentWithoutKey }
+                guard let index = state.lastSingleNote else {
+                    throw ResolveError.ornamentWithoutNote
+                }
+                let principal = state.notes[index]
+                let step = kind == .mordent ? -1 : 1
+                var neighbor = principal.midiNote + step
+                while !scale.contains((neighbor % 12 + 12) % 12) { neighbor += step }
+                let quarter = principal.durationTicks / 4
+                state.notes[index] = ResolvedNote(
+                    midiNote: principal.midiNote,
+                    startTick: principal.startTick, durationTicks: quarter)
+                state.notes.append(ResolvedNote(
+                    midiNote: neighbor,
+                    startTick: principal.startTick + quarter, durationTicks: quarter))
+                state.notes.append(ResolvedNote(
+                    midiNote: principal.midiNote,
+                    startTick: principal.startTick + 2 * quarter,
+                    durationTicks: principal.durationTicks - 2 * quarter))
+                state.pendingTies = [:]
+                state.lastSingleNote = state.notes.count - 1
             case .meter(let beats, let beatUnit):
                 state.meter = Meter(beats: beats, beatUnit: beatUnit)
             case .tempo(let label, let beatUnit, let beatsPerMinute):
@@ -338,6 +378,7 @@ public struct Resolver: Sendable {
                 // Sounding, spacer, or multi-measure: performed identically —
                 // silence for the written span. A tie cannot cross silence.
                 state.pendingTies = [:]
+                state.lastSingleNote = nil
                 state.tick += state.ticks(for: restToken.duration)
             default:
                 throw ResolveError.unsupportedNode("\(node)")
