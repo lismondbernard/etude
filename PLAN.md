@@ -389,8 +389,15 @@ comment: symptom → root cause → the guard now in place.
 Debussy's score (Mutopia `.ly`) combines `\parallelMusic` (round-robin bar
 distribution across voices), two independent voices per staff, cross-staff
 writing, nested tuplets, and irregular spacing. The prototype correctly expanded
-`\parallelMusic` to 72 bars/voice but could not time the dense polyphony. Carry
-this forward as:
+`\parallelMusic` to 72 bars/voice but could not time the dense polyphony (its
+section 1 came out 91/46/57/54 beats across the four voices). **Phase 4 status:
+the timing is SOLVED** — the Swift engine aligns all four voices at 72 bars of
+9/8, section by section, and the compact and expanded sources resolve
+identically. What remains, recorded as issue #1, is lhDown register drift below
+the piano's floor in bars 8–13/22–24/63–65: octave marks apparently lost when
+the prototype cleaned the Mutopia edition (LilyPond's own rules yield the same
+sub-audible pitches from this text). Fix path: recover the original Mutopia
+source and re-verify those marks. Carried forward as:
 - `Corpus/clair-de-lune.ly` vendored,
 - a `ParallelMusicExpander` in the Resolver (port the round-robin logic — it
   worked),
@@ -484,10 +491,12 @@ validator-throws test. Golden fixtures established.
 **Accept:** all six pieces build, validate, byte-stable across two consecutive
 runs; golden tests green.
 
-### Phase 4 — Acceptance suite + Boss Fight
+### Phase 4 — Acceptance suite + Boss Fight (done)
 Corpus acceptance tests with fingerprints; ParallelMusicExpander port; Clair de
 Lune under `withKnownIssue`; write `docs/lessons/` entries for all six bugs.
-**Accept:** suite green with exactly one known issue recorded.
+**Accept:** suite green with exactly one known issue recorded. *(Met — and the
+issue is narrower than planned: §7's alignment problem is SOLVED; what remains
+on record is lhDown register drift, GitHub issue #1.)*
 
 ### Phase 5 — App MVP + UI tests
 Screens per §8, page objects, the three UI test flows, accessibility identifiers
@@ -523,4 +532,4 @@ Tag `v0.1.0`.
 | Winter Largo (RV 297) | 5 (solo, 2 violins, viola, cello) | 18 | E♭-major solo (D♯/A♯ enharmonic in source) | ~52 BPM, pizzicato accompaniment |
 | Gymnopédie No. 1 | 3 (melody, accompaniment, bass) | 78 | F♯5 A5 G5 F♯5 | Gmaj7/Dmaj7 alternation; "Lent" |
 | Gnossienne No. 1 | 4 (melody, upper, lower, bass) | 82 | C5 E♭5 D5 C5 B4 | English note names, bare `\relative`, `q` chord-repeat, low-F pedal |
-| Clair de Lune | 4 voices | 72 | — | KNOWN ISSUE #1, `withKnownIssue` |
+| Clair de Lune | 4 voices | 72 | F4+A♭4, F5+A♭5 thirds | Aligned since Phase 4; lhDown register drift = KNOWN ISSUE #1, `withKnownIssue` |
