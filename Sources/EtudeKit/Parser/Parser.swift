@@ -10,6 +10,7 @@
 /// A syntactic error, carrying the offending token and its stream index.
 public enum ParseError: Error, Equatable, Sendable {
     case unexpectedToken(Token, index: Int)
+    case unexpectedEndOfInput
 }
 
 /// One node of the LilyPond-shaped parse tree. Pitches are still relative,
@@ -20,6 +21,7 @@ public indirect enum MusicNode: Equatable, Sendable {
     case rest(RestToken)
     case chord([NoteToken], duration: DurationToken?, tied: Bool)
     case chordRepeat(duration: DurationToken?)
+    case sequence([MusicNode])
 }
 
 /// Recursive-descent parser over the tokenizer's stream. Stateless between
@@ -29,10 +31,30 @@ public struct Parser: Sendable {
 
     /// Parses a music expression sequence — the inside of a `{ … }` block.
     public func parseMusic(_ tokens: [Token]) throws(ParseError) -> [MusicNode] {
-        var nodes: [MusicNode] = []
         var i = 0
+        let nodes = try parseSequence(tokens, &i, endingAt: nil)
+        guard i == tokens.count else {
+            throw ParseError.unexpectedToken(tokens[i], index: i)
+        }
+        return nodes
+    }
+
+    /// Parses expressions until `terminator` (consumed) or, with no terminator,
+    /// the end of the stream. Reaching the end while a terminator is still owed
+    /// is an unterminated group.
+    private func parseSequence(
+        _ tokens: [Token], _ i: inout Int, endingAt terminator: Token?
+    ) throws(ParseError) -> [MusicNode] {
+        var nodes: [MusicNode] = []
         while i < tokens.count {
+            if let terminator, tokens[i] == terminator {
+                i += 1
+                return nodes
+            }
             switch tokens[i] {
+            case .braceOpen:
+                i += 1
+                nodes.append(.sequence(try parseSequence(tokens, &i, endingAt: .braceClose)))
             case .note(let noteToken):
                 nodes.append(.note(noteToken, tied: false))
                 i += 1
@@ -74,6 +96,7 @@ public struct Parser: Sendable {
                 throw ParseError.unexpectedToken(tokens[i], index: i)
             }
         }
+        guard terminator == nil else { throw ParseError.unexpectedEndOfInput }
         return nodes
     }
 }
