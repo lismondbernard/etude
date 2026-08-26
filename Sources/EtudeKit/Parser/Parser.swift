@@ -1,12 +1,42 @@
-// Parser — `[Token]` → raw event tree   (implemented in Phase 2)
+// Parser — `[Token]` → raw event tree   (Phase 2, built test-first)
 //
 // Recursive-descent parse into a tree of notes/chords/rests with relative pitch
-// context still UNRESOLVED. Captures repeat blocks, tuplet groupings
-// (`\times 2/3 { … }` scales durations), grace groups (steal time from the
-// following note; acciaccatura ≈ very short), and parallel `<<…>>` groups.
+// context still UNRESOLVED (§0.4: the tree is LilyPond-shaped and never travels
+// past the Resolver). Captures repeat blocks, tuplet groupings, grace groups,
+// and parallel `<<…>>` groups.
 //
 // `\crossStaff { … }` braces are grouping no-ops, NOT parallel separators (BUG-003).
-// Errors are a typed `ParseError` carrying source location. The event tree is
-// Codable so it can be snapshot-tested (tree → JSON, compared to a fixture).
 
-// Intentionally empty in Phase 0.
+/// A syntactic error, carrying the offending token and its stream index.
+public enum ParseError: Error, Equatable, Sendable {
+    case unexpectedToken(Token, index: Int)
+}
+
+/// One node of the LilyPond-shaped parse tree. Pitches are still relative,
+/// repeats unexpanded, tuplet fractions unapplied — resolving all of that is
+/// the Resolver's job, and this shape must not appear past it.
+public indirect enum MusicNode: Equatable, Sendable {
+    case note(NoteToken, tied: Bool)
+}
+
+/// Recursive-descent parser over the tokenizer's stream. Stateless between
+/// runs; all per-run state lives inside `parseMusic`.
+public struct Parser: Sendable {
+    public init() {}
+
+    /// Parses a music expression sequence — the inside of a `{ … }` block.
+    public func parseMusic(_ tokens: [Token]) throws(ParseError) -> [MusicNode] {
+        var nodes: [MusicNode] = []
+        var i = 0
+        while i < tokens.count {
+            switch tokens[i] {
+            case .note(let noteToken):
+                nodes.append(.note(noteToken, tied: false))
+                i += 1
+            default:
+                throw ParseError.unexpectedToken(tokens[i], index: i)
+            }
+        }
+        return nodes
+    }
+}
