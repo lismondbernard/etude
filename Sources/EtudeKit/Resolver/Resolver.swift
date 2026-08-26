@@ -74,6 +74,10 @@ public struct Resolver: Sendable {
                 state.notes.append(
                     ResolvedNote(midiNote: midi, startTick: state.tick, durationTicks: ticks))
                 state.tick += ticks
+            case .rest(let restToken):
+                // Sounding, spacer, or multi-measure: performed identically —
+                // silence for the written span.
+                state.tick += ticks(of: restToken.duration ?? DurationToken(4))
             default:
                 throw ResolveError.unsupportedNode("\(node)")
             }
