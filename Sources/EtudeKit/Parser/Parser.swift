@@ -247,6 +247,60 @@ public struct Parser: Sendable {
                 i += 1
             case .command(let name) where Self.engravingCommands.contains(name):
                 i += 1
+            case .command("clef"):
+                // The clef names a staff's reading, not a sound: skip it and
+                // its (bare or quoted) argument.
+                i += 1
+                if i < tokens.count, case .identifier = tokens[i] { i += 1 }
+                else if i < tokens.count, case .string = tokens[i] { i += 1 }
+            case .command("ottava"), .command("barNumberCheck"):
+                // Octavation brackets mark printing (input is always sounding
+                // pitch); bar-number checks are proofreading.
+                i += 1
+                if i < tokens.count, case .scheme = tokens[i] { i += 1 }
+            case .command("change"):
+                // `\change Staff = "upper"` moves notes between printed
+                // staves; the performing voice is unbroken.
+                i += 1
+                if i < tokens.count, case .identifier = tokens[i] { i += 1 }
+                if i + 1 < tokens.count, tokens[i] == .equals { i += 1 }
+                if i < tokens.count, case .string = tokens[i] { i += 1 }
+            case .command("override"):
+                // Skip the grob path up to `=`, then the assigned value.
+                i += 1
+                scan: while i < tokens.count {
+                    switch tokens[i] {
+                    case .identifier, .scheme:
+                        i += 1
+                    case .equals:
+                        i += 1
+                        if i < tokens.count {
+                            switch tokens[i] {
+                            case .scheme, .number, .string: i += 1
+                            default: break
+                            }
+                        }
+                        break scan
+                    default:
+                        break scan
+                    }
+                }
+            case .command("markup"):
+                // A markup chain (`\markup\italic"…"`) is printed prose:
+                // skip the styling commands and the text they wrap.
+                i += 1
+                while i < tokens.count, case .command = tokens[i] { i += 1 }
+                if i < tokens.count, case .string = tokens[i] {
+                    i += 1
+                } else if i < tokens.count, tokens[i] == .braceOpen {
+                    i += 1
+                    var depth = 1
+                    while i < tokens.count, depth > 0 {
+                        if tokens[i] == .braceOpen { depth += 1 }
+                        if tokens[i] == .braceClose { depth -= 1 }
+                        i += 1
+                    }
+                }
             case .command("version"), .command("language"), .command("include"):
                 // Declarations whose string argument the tokenizer has already
                 // acted on (note-name language) or that only matter to LilyPond.
@@ -428,6 +482,11 @@ public struct Parser: Sendable {
         // A trill plays plain in this engine (the prototype's reading, baked
         // into the golden fixtures); mordent and prall ARE performed.
         "trill",
+        // Dynamics shape loudness on the page; velocity here is per-voice.
+        "pp", "ppp", "pppp", "p", "mp", "mf", "f", "ff", "fff", "sf", "sfz",
+        // Per-note effects and engraving toggles.
+        "arpeggio", "sustainOn", "sustainOff", "slurNeutral",
+        "mergeDifferentlyDottedOn", "mergeDifferentlyHeadedOn",
     ]
 
     /// Consumes an `n/d` fraction.

@@ -32,6 +32,45 @@ struct ParseEngravingSkipsTests {
         ])
     }
 
+    @Test("skips dynamics and per-note effect commands", .tags(.unit), arguments: [
+        "pp", "ppp", "p", "mp", "mf", "f", "ff", "fff", "sf",
+        "arpeggio", "sustainOn", "sustainOff", "slurNeutral",
+        "mergeDifferentlyDottedOn", "mergeDifferentlyHeadedOn",
+    ])
+    func dynamicsAndEffects(command: String) throws {
+        #expect(try makeSUT().parseMusic(tokens("c \\\(command) d")) == [
+            note("c"), note("d"),
+        ])
+    }
+
+    @Test("skips commands that carry an argument", .tags(.unit), arguments: [
+        "\\clef bass", "\\clef \"treble\"", "\\ottava #1", "\\barNumberCheck#66",
+        "\\change Staff = \"upper\"",
+    ])
+    func argumentedCommands(fragment: String) throws {
+        #expect(try makeSUT().parseMusic(tokens("c \\\(fragment) d")) == [
+            note("c"), note("d"),
+        ])
+    }
+
+    @Test("skips an override through its assigned value", .tags(.unit))
+    func overrides() throws {
+        // Verbatim shapes from Clair de Lune's prelude definitions.
+        let source = "c \\override Beam #'damping = #3 d \\override NoteColumn #'ignore-collision = ##t e"
+        #expect(try makeSUT().parseMusic(tokens(source)) == [
+            note("c"), note("d"), note("e"),
+        ])
+    }
+
+    @Test("skips a markup chain with its text", .tags(.unit))
+    func markup() throws {
+        // Verbatim shape from Clair de Lune: `r4\ppp^\markup\italic"morendo jusqu'à la fin"`
+        #expect(try makeSUT().parseMusic(tokens("r4 \\markup \\italic \"morendo\" c")) == [
+            .rest(RestToken(kind: .sounding, duration: dur(4))),
+            note("c"),
+        ])
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> Parser { Parser() }
