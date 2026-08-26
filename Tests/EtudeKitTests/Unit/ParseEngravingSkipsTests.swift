@@ -48,7 +48,7 @@ struct ParseEngravingSkipsTests {
         "\\change Staff = \"upper\"",
     ])
     func argumentedCommands(fragment: String) throws {
-        #expect(try makeSUT().parseMusic(tokens("c \\\(fragment) d")) == [
+        #expect(try makeSUT().parseMusic(tokens("c \(fragment) d")) == [
             note("c"), note("d"),
         ])
     }

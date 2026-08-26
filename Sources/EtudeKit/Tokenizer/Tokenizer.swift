@@ -215,7 +215,8 @@ public struct Tokenizer: Sendable {
                         payload.append(chars[i])
                         i += 1
                     }
-                    while i < chars.count, chars[i].isLetter || chars[i].isNumber {
+                    while i < chars.count,
+                          chars[i].isLetter || chars[i].isNumber || chars[i] == "-" {
                         payload.append(chars[i])
                         i += 1
                     }
