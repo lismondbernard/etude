@@ -32,6 +32,32 @@ struct ParseGroupsTests {
         }
     }
 
+    @Test("parses simultaneous music into a parallel group", .tags(.unit))
+    func parallelGroup() throws {
+        #expect(try makeSUT().parseMusic(tokens("<< { c d } { e f } >>")) == [
+            .parallel([
+                .sequence([note("c"), note("d")]),
+                .sequence([note("e"), note("f")]),
+            ]),
+        ])
+    }
+
+    @Test("a parallel group's children may be bare events", .tags(.unit))
+    func parallelBareChildren() throws {
+        // The Gnossienne wraps a lone note and an ossia voice: `<<af2 …>>`.
+        #expect(try makeSUT().parseMusic(tokens("<< c2 { e } >> f")) == [
+            .parallel([note("c", dur(2)), .sequence([note("e")])]),
+            note("f"),
+        ])
+    }
+
+    @Test("delivers a typed error on an unclosed parallel group", .tags(.unit))
+    func unclosedParallel() throws {
+        #expect(throws: ParseError.unexpectedEndOfInput) {
+            try makeSUT().parseMusic(tokens("<< { c }"))
+        }
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> Parser { Parser() }

@@ -22,6 +22,7 @@ public indirect enum MusicNode: Equatable, Sendable {
     case chord([NoteToken], duration: DurationToken?, tied: Bool)
     case chordRepeat(duration: DurationToken?)
     case sequence([MusicNode])
+    case parallel([MusicNode])
 }
 
 /// Recursive-descent parser over the tokenizer's stream. Stateless between
@@ -55,6 +56,11 @@ public struct Parser: Sendable {
             case .braceOpen:
                 i += 1
                 nodes.append(.sequence(try parseSequence(tokens, &i, endingAt: .braceClose)))
+            case .parallelStart:
+                // Each element parsed between `<<` and `>>` is one simultaneous
+                // child expression — a bare event or a braced sequence.
+                i += 1
+                nodes.append(.parallel(try parseSequence(tokens, &i, endingAt: .parallelEnd)))
             case .note(let noteToken):
                 nodes.append(.note(noteToken, tied: false))
                 i += 1
