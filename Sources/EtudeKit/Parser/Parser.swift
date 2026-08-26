@@ -13,6 +13,12 @@ public enum ParseError: Error, Equatable, Sendable {
     case unexpectedEndOfInput
 }
 
+/// How a `\repeat` block is performed: `volta` plays the body then any
+/// alternative endings; `unfold` writes the body out `count` times.
+public enum RepeatStyle: String, Equatable, Sendable {
+    case volta, unfold
+}
+
 /// One node of the LilyPond-shaped parse tree. Pitches are still relative,
 /// repeats unexpanded, tuplet fractions unapplied — resolving all of that is
 /// the Resolver's job, and this shape must not appear past it.
@@ -24,6 +30,7 @@ public indirect enum MusicNode: Equatable, Sendable {
     case sequence([MusicNode])
     case parallel([MusicNode])
     case relative(anchor: NoteToken?, body: [MusicNode])
+    case repeated(RepeatStyle, count: Int, body: [MusicNode], alternatives: [[MusicNode]])
 }
 
 /// Recursive-descent parser over the tokenizer's stream. Stateless between
@@ -123,6 +130,20 @@ public struct Parser: Sendable {
                 i += 1
             }
             return .relative(anchor: anchor, body: try parseBracedBody(tokens, &i))
+        case "repeat":
+            i += 1
+            guard i < tokens.count else { throw ParseError.unexpectedEndOfInput }
+            guard case .identifier(let styleWord) = tokens[i],
+                  let style = RepeatStyle(rawValue: styleWord) else {
+                throw ParseError.unexpectedToken(tokens[i], index: i)
+            }
+            i += 1
+            guard i < tokens.count else { throw ParseError.unexpectedEndOfInput }
+            guard case .number(let count) = tokens[i] else {
+                throw ParseError.unexpectedToken(tokens[i], index: i)
+            }
+            i += 1
+            return .repeated(style, count: count, body: try parseBracedBody(tokens, &i), alternatives: [])
         default:
             throw ParseError.unexpectedToken(.command(name), index: i)
         }
