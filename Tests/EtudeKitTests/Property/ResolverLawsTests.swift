@@ -24,7 +24,43 @@ struct ResolverLawsTests {
         }
     }
 
+    @Test("a raising mark then a lowering mark restores the walk", .tags(.property))
+    func octaveMarksAreInverses() throws {
+        var random = SeededRandom(seed: 0xC11)
+        for _ in 0..<50 {
+            let body = randomWalk(using: &random)
+            let position = Int.random(in: 0..<body.count, using: &random)
+
+            // Raise note `position` an octave and lower its successor back.
+            var altered = body
+            altered[position] = shifted(altered[position], by: 1)
+            if position + 1 < altered.count {
+                altered[position + 1] = shifted(altered[position + 1], by: -1)
+            }
+
+            let base = try Resolver().resolve([
+                .relative(anchor: NoteToken(name: "c", octaveMarks: 1), body: body),
+            ])
+            let raised = try Resolver().resolve([
+                .relative(anchor: NoteToken(name: "c", octaveMarks: 1), body: altered),
+            ])
+
+            var expected = base.notes.map(\.midiNote)
+            expected[position] += 12
+            #expect(raised.notes.map(\.midiNote) == expected,
+                    "seed 0xC11 — `'` then `,` must restore every later pitch")
+        }
+    }
+
     // MARK: - Helpers
+
+    private func shifted(_ node: MusicNode, by octaves: Int) -> MusicNode {
+        guard case .note(let noteToken, let tied) = node else { return node }
+        return .note(NoteToken(name: noteToken.name,
+                               octaveMarks: noteToken.octaveMarks + octaves,
+                               duration: noteToken.duration),
+                     tied: tied)
+    }
 
     private func randomWalk(using random: inout SeededRandom) -> [MusicNode] {
         let names = ["c", "d", "e", "f", "g", "a", "b", "fis", "cis", "bes", "aes"]
