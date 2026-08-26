@@ -31,6 +31,22 @@ struct TokenizeMarksTests {
         ])
     }
 
+    @Test("skips beam brackets and attach carets as engraving noise", .tags(.unit))
+    func beamsAndAttachMarks() throws {
+        let sut = makeSUT()
+        // Verbatim shapes from the Minuet source: `g,8[ a b c]`, `c8^[\mordent d`
+        #expect(try sut.tokenize("g,8[ a b c] c8^[ d e_ f") == [
+            .note(NoteToken(name: "g", octaveMarks: -1, duration: DurationToken(8))),
+            .note(NoteToken(name: "a")),
+            .note(NoteToken(name: "b")),
+            .note(NoteToken(name: "c")),
+            .note(NoteToken(name: "c", duration: DurationToken(8))),
+            .note(NoteToken(name: "d")),
+            .note(NoteToken(name: "e")),
+            .note(NoteToken(name: "f")),
+        ])
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> Tokenizer { Tokenizer() }

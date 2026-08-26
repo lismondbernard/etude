@@ -106,7 +106,7 @@ public struct Tokenizer: Sendable {
         var language = NoteLanguage.dutch
         while i < chars.count {
             let c = chars[i]
-            if c.isWhitespace {
+            if c.isWhitespace || Self.engravingNoise.contains(c) {
                 i += 1
                 continue
             }
@@ -243,6 +243,10 @@ public struct Tokenizer: Sendable {
         }
         return (line, column)
     }
+
+    /// Beam brackets and articulation-attach carets shape the engraving, not
+    /// the performance — lexed to nothing, wherever they are glued.
+    private static let engravingNoise: Set<Character> = ["[", "]", "^", "_"]
 
     private static let marks: [Character: Token] = [
         "~": .tie, "(": .slurOpen, ")": .slurClose, "|": .barCheck,
