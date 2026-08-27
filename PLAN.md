@@ -524,6 +524,57 @@ plus the two capstone lessons from §0:
   month are on record in HISTORY.md as findings.)*
 Tag `v0.1.0`.
 
+### Phase 7 — Delivery (planned)
+
+Phases 0–6 built the course; this phase puts it in front of students. The
+artifact is finished — what follows is diligence, decisions, and distribution.
+Unlike the build phases, most steps here are not code; the §0 commit discipline
+applies only where code changes (7.4).
+
+**7.1 Corpus licensing diligence (blocks going public).** Close every open row
+in `Corpus/LICENSES.md`:
+- **Winter** — recover the typesetter's name from the Mutopia edition and add
+  the CC-BY-SA attribution string (action item 2).
+- **Minuet, Air** — open each Mutopia source header, confirm its license, and
+  record it (action item 1).
+- **Gnossienne** — determine whether the edition's CC-BY-SA reaches our
+  reconstruction. If yes, attribute + share-alike that file; if the answer is
+  unclear, treat it as reaching (attribute anyway) or re-typeset from a PD
+  edition — never ship an unresolved license question in a public repo.
+
+**7.2 The history decision.** Decide, explicitly, whether the private-era
+history publishes as-is or is squashed first — and record the reasoning as
+**ADR-0005**. The tension is real: §0.1 says the history is a deliverable and
+HISTORY.md already records its defects as findings; rewriting would erase the
+very evidence the course teaches from. The default position is **publish
+as-is** — a history with three documented duplicate subjects is a better
+lesson than a laundered one.
+
+**7.3 Go public.** Flip the repo to public with: a description and topics;
+retroactive lightweight tags at each `PLAN: mark Phase N done` commit so every
+course stop is checkout-able (`phase-1` … `phase-6`); a short **CONTRIBUTING.md**
+stating the §0 rules a PR must follow (one behavior per commit, behavior-named
+subject, test first) and pointing new readers at the README course map; CI
+green and public.
+
+**7.4 App Store submission.** "A real product raises the stakes" is part of
+the course's argument, so shipping is part of delivery:
+- **Issue #3 is the gate** — silent in-app playback on device (no iOS sound
+  bank, no audio session). Fixed under the §0 method; the bundled SoundFont's
+  license lands in the credits screen and `Corpus/LICENSES.md`-style provenance.
+- Store metadata, screenshots, privacy declarations (none to declare — the app
+  is offline), and review. Ship as **1.0.0**, tagged.
+
+**7.5 Student-facing extras (optional, after public).** Exercise checkpoints
+("before reading the fix commit, try writing the failing test yourself") added
+to the lessons; a first-issue label seeding contributions. Issue #4 (browse
+and download from Mutopia) is the designated post-1.0 arc — real-world input
+is the fuzzing curriculum arriving as a feature.
+
+**Accept:** LICENSES.md has zero open action items; ADR-0005 exists; the repo
+is public with phase tags and CONTRIBUTING.md; the app is live on the App
+Store with audible playback; issues #3 closed and #4 groomed as the next arc.
+
 ---
 
 ## Appendix A — Validation checklist (run for every piece, always)
