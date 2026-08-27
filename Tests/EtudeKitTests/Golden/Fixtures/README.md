@@ -38,6 +38,14 @@ writers restore identical events before the naive writer was deleted); only the
 are omitted, so the files are smaller. Re-baselined in the same commit that
 deleted the naive writer.
 
+**Provenance (issue #2, closed):** `gymnopedie-1.mid` was re-baselined when the
+ending was restored to Evin Robertson's original text: the `<< \context Voice … >>`
+figure bar sounds its B2/E3 voicelet again, the closing chords sit at G3+A2 and
+D3+A2+D2, and the first ending's `b,` is B1 — all pitch-verified against
+Robertson's own LilyPond rendering. The old marks had been derived from the
+prototype's clamp targets, which BUG-007 (and its alternative-endings sibling)
+had put an octave off.
+
 **Provenance (issue #1, closed):** `clair-de-lune.mid` was re-baselined once more
 when the corpus's §1 `lhDown` anchor was restored to the recovered Mutopia
 original's `c'` — the last register drift gone, the piece now flows through this

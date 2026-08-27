@@ -21,3 +21,12 @@ BUG-007's story).
 ## Lesson
 Invariants beat defensive code. A clamp turns a loud bug into a quiet one; a
 validator turns a quiet bug into a red test.
+
+## Coda (issue #2)
+The clamp had one more casualty to disclose: the "corrected" corpus marks of
+Phase 3 were aimed at the *clamp targets*, and the clamp targets themselves were
+an octave off, because the prototype resolving them carried BUG-007 (and its
+alternative-endings sibling). Once Mutopia's own rendering became the oracle,
+the ending was restored to Evin Robertson's original text — voicelet, chord
+octaves, B1 and all. Repairing toward a repaired reference propagates the
+repair's error; only an independent oracle breaks the loop.

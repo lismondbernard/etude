@@ -65,6 +65,24 @@ struct BuildCorpusPiecesTests {
         // 78 performed bars of 3/4, every voice.
         #expect(score.voices.map(\.totalTicks) == Array(repeating: 112320, count: 3))
         try Validator().validate(score, expectedOpening: [78, 81, 79, 78])
+
+        // The restored original ending (issue #2), pitch-verified against
+        // Evin Robertson's own LilyPond rendering. Second alternative
+        // (performed bars 71–78): five E2 pedals, the figure bar — pedal
+        // under a B2/E3 voicelet entering after a pitched rest — then the
+        // G3+A2 and D3+A2+D2 closing chords.
+        let bass = score.voices.last!
+        let ending = bass.events.filter { $0.startTick >= 70 * 1440 }
+            .sorted { ($0.startTick, $0.pitch) < ($1.startTick, $1.pitch) }
+        #expect(ending.map { Int($0.pitch) } ==
+                [40, 40, 40, 40, 40, 40, 47, 52, 45, 55, 38, 45, 50])
+        #expect(ending.map(\.startTick) ==
+                [100800, 102240, 103680, 105120, 106560,
+                 108000, 108480, 108960, 109440, 109440, 110880, 110880, 110880])
+        // First alternative, bar 34: the original's `b,` is B1 — the old
+        // reconstruction (marked toward the prototype's clamp targets) sat
+        // an octave high at B2.
+        #expect(bass.events.first { $0.startTick == 33 * 1440 }?.pitch == 35)
     }
 
     @Test("the Gnossienne assembles and validates", .tags(.acceptance))

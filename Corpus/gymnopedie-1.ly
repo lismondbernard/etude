@@ -11,16 +11,21 @@
 % bar to its sustained bass note after register drift was clamped (and hidden).
 % The Swift Validator must THROW on that figure — see docs/adr/0001-clamp-vs-throw.md.
 %
-% Phase 3 correction: the bass octave marks originally copied from the
-% prototype resolved the endings down to E0/D0 — sub-audible drift the
-% prototype's `clamp(lo=36)` silently lifted, exactly BUG-004's failure mode.
-% The Validator caught it on first assembly, and the marks here now resolve
-% honestly to the pitches the clamp used to fake (E2 pedals, G2+A2, D2+A2+D2).
+% Ending provenance (issues #1/#2): the alternatives below are Evin Robertson's
+% original text verbatim (the `<< \context Voice … >>` figure bar restored, the
+% closing chords `<g' a,> <d a d,>` in his marks). The Phase 3 "correction"
+% had re-marked them toward the prototype's clamp targets — G2+A2 where the
+% engraving has G3+A2, doubled D2s in the final chord, B2 for the first
+% ending's B1, and no voicelet at all. All of that descended from BUG-007
+% (the prototype and this engine both mis-resolved parallel and alternative
+% relative context, so the clamp targets themselves were an octave off).
+% Restored and pitch-verified bar-by-bar against Robertson's own LilyPond
+% rendering (gymnopedie_1.mid).
 % Also: this engine threads relative context through pitched rests (`d4\rest`)
 % as LilyPond does; the prototype ignored rest pitches, so its MIDI put the
 % first-ending chords an octave higher than the engraving implies. The golden
 % fixture encodes this engine's engraving-faithful reading.
-% Original edition: https://www.mutopiaproject.org/ (search "Satie Gymnopédie")
+% Original edition: https://www.mutopiaproject.org/ftp/SatieE/gymnopedie_1/
 
 \header {
   title = "Gymnopédie No. 1"
@@ -67,8 +72,12 @@ bass = \relative c {
     fis2. b2. e,2. e2. d2. a'2. d,2. d2. d2. d2. d2. d2. d2. d2. d2.
   }
   \alternative {
-    { e2. fis2. b2. e,2. e2. e2. <g a>2. <d a' d,>2. }
-    { e2. e2. e2. e2. e2. e2. <g a>2. <d a' d,>2. }
+    { e2. fis2. b,2. e2. e2.
+      << \context Voice = "othervoice" { c'4\rest b e } e,2. >>
+      <g' a,>2. <d a d,>2. }
+    { e,2. e2. e2. e2. e2.
+      << \context Voice = "othervoice" { c'4\rest b e } e,2. >>
+      <g' a,>2. <d a d,>2. }
   }
 }
 
