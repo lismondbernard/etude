@@ -57,7 +57,7 @@ public struct CorpusPiece: Equatable, Sendable, Identifiable {
             id: "winter-largo", title: "Winter (Largo)", composer: "Antonio Vivaldi",
             velocities: ["solo": 96, "violinOne": 60, "violinTwo": 60,
                          "viola": 66, "cello": 66],
-            licenseBadge: "CC-BY-SA typesetting"),
+            licenseBadge: "CC-BY-SA 3.0 typesetting"),
         CorpusPiece(
             id: "gymnopedie-1", title: "Gymnopédie No. 1", composer: "Erik Satie",
             velocities: ["melody": 88, "accompaniment": 64, "bass": 64]),

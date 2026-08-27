@@ -3,13 +3,18 @@
 % second movement (public domain composition).
 %
 % RECONSTRUCTED performing text from the prior-art prototype (music/winter.py),
-% which cleaned a Mutopia edition. That edition's TYPESETTING is CC-BY-SA —
-% see Corpus/LICENSES.md for attribution status before redistributing this
-% file. 18 bars, five string parts. Trilled notes play plain (the prototype's
+% which cleaned the Mutopia "L'Inverno / Winter" edition (Mutopia-2010/02/08-351,
+% source: Performers' Facsimiles; the Largo is its second movement). That
+% typesetting is licensed CC-BY-SA 3.0 Unported, and because this file's note
+% text derives from it, THIS FILE is likewise CC-BY-SA 3.0 (share-alike) — not
+% Apache-2.0 like the Étude-typeset corpus files. Attribution: typeset by
+% "Anonymous" (the credit the typesetter chose) for the Mutopia Project,
+% https://www.mutopiaproject.org/ftp/VivaldiA/O8/winter/
+% License: https://creativecommons.org/licenses/by-sa/3.0/
+% 18 bars, five string parts. Trilled notes play plain (the prototype's
 % reading, baked into the goldens). The solo opens the E-flat major theme:
 % Eb5 Bb5 Ab5 G5 F5 (the original source spelled some of these enharmonically
 % as D#/A#; the prototype normalized the spelling). ~52 BPM.
-% Original edition: https://www.mutopiaproject.org/ (search "Vivaldi Four Seasons Winter")
 
 \header {
   title = "Winter (Largo)"

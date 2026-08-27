@@ -16,12 +16,18 @@ only.
 | Air on the G String | `air-on-the-g-string.ly` | **reconstructed** | Étude typesetting (Apache-2.0); note text via prototype from Mike Blackstock's Mutopia flute+guitar edition — **public domain, verified** (header: "placed in the public domain by the typesetter"; "New adaptation from Bach-Gesellschaft"; Mutopia-2008/10/28-1534) | Flute + guitar-upper only; bass omitted (edition repeat mismatch). Written in performed form: repeats play once, first ending only. Fingerings stripped. Partial chord ties sustain (2 fewer notes than prototype MIDI — documented in file). |
 | Gymnopédie No. 1 | `gymnopedie-1.ly` | **reconstructed** | Étude typesetting (Apache-2.0); note text from Evin Robertson's Mutopia edition — **public domain, verified** (Dover Edition source; header: "placed in the public domain by the typesetter") | Performing text rebuilt from `music/gymnopedie.py` streams; the ending alternatives are Robertson's original text verbatim since issue #2 (BUG-004/BUG-007 territory), pitch-verified against his rendering. |
 | Gnossienne No. 1 | `gnossienne-1.ly` | **reconstructed** | **CC-BY-SA 4.0, verified** — note text via prototype from Knute Snortum's Mutopia edition (Mutopia-2015/07/23-2035; source Éditions Salabert 1913; the only Gnossienne No. 1 on Mutopia, English note names matching ours). Share-alike reaches the reconstruction, so `gnossienne-1.ly` itself is CC-BY-SA 4.0, attributed in its header — not Apache-2.0. | English note names; `q` chord-repeat (introduced in reconstruction); BUG-005 fragment preserved verbatim. |
-| Winter — Largo | `winter-largo.ly` | **reconstructed** | Note text via prototype from a Mutopia edition its docstring calls **CC-BY-SA** | Single file, five voices verbatim from `winter.py`, tick-verified against the prototype MIDI. Typesetter name was not recorded by the prototype — recover it from Mutopia and add the attribution string here before the repo goes public (action item 2 still open). Trills play plain. |
+| Winter — Largo | `winter-largo.ly` | **reconstructed** | **CC-BY-SA 3.0 Unported, verified** — note text via prototype from the Mutopia "L'Inverno / Winter" edition (Mutopia-2010/02/08-351; source Performers' Facsimiles; the Largo is movement 2 of its five-part setting, matching our five voices). Typesetter credit as published: **"Anonymous"** — attribution follows that credit. Share-alike reaches the reconstruction, so `winter-largo.ly` itself is CC-BY-SA 3.0, attributed in its header — not Apache-2.0. | Single file, five voices verbatim from `winter.py`, tick-verified against the prototype MIDI. Trills play plain. |
 
 ## Action items before replacing any stub with a real `.ly`
-1. Open the Mutopia source, confirm its header license, and record it in the row above.
-2. For **Winter**, add the CC-BY-SA attribution string (typesetter + source URL) here.
-   **Still open** — the prototype did not record the typesetter's name.
+1. ~~Open the Mutopia source, confirm its header license, and record it in the row above.~~
+   **Done (Phase 7.1):** all seven rows carry verified headers — Clair (O'Hara, PD),
+   Minuet (Garvin, PD), Air (Blackstock, PD), Gymnopédie (Robertson, PD),
+   Gnossienne (Snortum, CC-BY-SA 4.0), Winter ("Anonymous", CC-BY-SA 3.0),
+   Prelude (Étude-generated).
+2. ~~For **Winter**, add the CC-BY-SA attribution string (typesetter + source URL) here.~~
+   **Done (Phase 7.1):** the edition credits its typesetter as "Anonymous";
+   attribution follows the published credit — see the Winter row and the
+   attribution block in `winter-largo.ly`.
 3. ~~For **Prelude in C**, record the final decision~~ **Done (Phase 3):** typeset as
    `prelude-in-c.ly`, generated from the prototype MIDI and verified tick-exact.
    Has a downstream consumer — see "Foreign Words marketing assets" below.
