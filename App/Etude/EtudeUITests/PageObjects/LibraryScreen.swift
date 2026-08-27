@@ -19,6 +19,14 @@ struct LibraryScreen {
     }
 
     @discardableResult
+    func openCredits() -> CreditsScreen {
+        let button = app.buttons["library.button.credits"].firstMatch
+        XCTAssertTrue(button.waitForExistence(timeout: 5), "credits button should exist")
+        button.tap()
+        return CreditsScreen(app: app)
+    }
+
+    @discardableResult
     func openPiece(_ pieceID: String) -> PieceDetailScreen {
         let row = row(for: pieceID)
         XCTAssertTrue(row.waitForExistence(timeout: 5), "row for \(pieceID) should exist")

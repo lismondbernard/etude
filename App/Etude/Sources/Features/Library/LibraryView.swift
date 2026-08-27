@@ -19,6 +19,14 @@ struct LibraryView: View {
             }
             .navigationTitle("Étude")
             .accessibilityIdentifier("library.screen")
+            .toolbar {
+                NavigationLink {
+                    CreditsView()
+                } label: {
+                    Label("Credits", systemImage: "info.circle")
+                }
+                .accessibilityIdentifier("library.button.credits")
+            }
         }
     }
 
