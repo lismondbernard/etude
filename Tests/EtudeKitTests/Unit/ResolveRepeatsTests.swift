@@ -58,10 +58,14 @@ struct ResolveRepeatsTests {
         #expect(resolved.totalTicks == 6 * 1440)
     }
 
-    @Test("each alternative resolves from the body-end context", .tags(.unit))
-    func alternativesShareBodyEndContext() throws {
-        // The second ending's octave placement must come from the body's last
-        // note, not from wherever the first ending wandered.
+    @Test("alternatives thread the relative context in written order", .tags(.unit))
+    func alternativesThreadInWrittenOrder() throws {
+        // LilyPond converts \relative to absolute pitches by walking the
+        // SOURCE, before any repeat is performed — so the second ending's
+        // octave follows the first ending's last note, not the body's.
+        // (BUG-007's sibling: the Gymnopédie original writes its second
+        // ending as `e,2.`, which only lands on E2 this way — from the
+        // body-end context it would fall to E1.)
         let resolved = try makeSUT().resolve([
             .relative(anchor: NoteToken(name: "c", octaveMarks: 1), body: [
                 .repeated(.volta, count: 2,
@@ -69,10 +73,10 @@ struct ResolveRepeatsTests {
                           alternatives: [[note("g", marks: 1, dur(4))], [note("g", dur(4))]]),
             ]),
         ])
-        // Body C4; first ending places g DOWN to G3, the mark lifts it to G4;
-        // the second ending's bare g is G3 again — placed from the body's C4,
-        // NOT from the first ending's G4.
-        #expect(resolved.notes.map(\.midiNote) == [60, 67, 60, 55])
+        // Body C4; first ending places g down to G3, the mark lifts it to G4;
+        // the second ending's bare g holds that G4 — placed from the first
+        // ending's end, NOT dropped back to the body's C4.
+        #expect(resolved.notes.map(\.midiNote) == [60, 67, 60, 67])
     }
 
     @Test("volta without alternatives simply plays the body count times", .tags(.unit))

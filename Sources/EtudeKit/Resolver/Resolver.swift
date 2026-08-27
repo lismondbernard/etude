@@ -307,8 +307,11 @@ public struct Resolver: Sendable {
             case .repeated(.volta, let count, let body, let alternatives):
                 // Performed form: the body plays `count` times, the endings
                 // covering the final passes. The body is resolved ONCE and
-                // copied (BUG-002); every ending starts from the body-end
-                // context, not from wherever the previous ending wandered.
+                // copied (BUG-002) — pitch conversion happens in WRITTEN
+                // order, so each ending's relative context follows the
+                // previous ending's end, exactly as LilyPond walks the source
+                // (BUG-007's sibling; the Gymnopédie's `e,2.` second ending
+                // depends on it). Only TIME follows the performed order.
                 state.pendingTies = [:]
                 let firstEvent = state.notes.count
                 let bodyStart = state.tick
@@ -316,7 +319,6 @@ public struct Resolver: Sendable {
                 state.pendingTies = [:]
                 let bodyEvents = Array(state.notes[firstEvent...])
                 let bodySpan = state.tick - bodyStart
-                let bodyEndContext = (state.reference, state.lastDuration, state.lastChord)
                 for pass in 0..<max(count, 1) {
                     if pass > 0 {
                         let offset = state.tick - bodyStart
@@ -329,7 +331,6 @@ public struct Resolver: Sendable {
                     }
                     let endingIndex = pass - (max(count, 1) - alternatives.count)
                     if endingIndex >= 0, endingIndex < alternatives.count {
-                        (state.reference, state.lastDuration, state.lastChord) = bodyEndContext
                         try resolveSequence(alternatives[endingIndex], into: &state)
                         state.pendingTies = [:]
                     }
