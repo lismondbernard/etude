@@ -19,11 +19,20 @@ jobs:
 
   # Slow lane: app + UI tests on the simulator. Heavier; suitable for nightly if it
   # becomes a bottleneck (schedule left commented until the app target is fleshed out).
+  #
+  # Runner notes: the UI tests are Swift-6-strict and need the iOS 26 SDK, so this
+  # job runs on macos-26. The image's default Xcode (26.6) ships with NO simulator
+  # runtimes, so we pin the newest Xcode that bundles one (26.5) and let xcodebuild
+  # resolve the OS version rather than pinning one the runner may not have.
   app:
     name: Etude app + UI tests (xcodebuild)
-    runs-on: macos-15
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
+      - name: Select Xcode with a bundled simulator runtime
+        run: |
+          sudo xcode-select -s "$(ls -d /Applications/Xcode_26.5*.app | head -1)"
+          xcodebuild -version
       - name: Install XcodeGen
         run: brew install xcodegen
       - name: Generate Xcode project
@@ -34,5 +43,5 @@ jobs:
         run: |
           xcodebuild test \
             -scheme Etude \
-            -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=26.2' \
+            -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
             CODE_SIGNING_ALLOWED=NO
