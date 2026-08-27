@@ -37,6 +37,22 @@ struct WriteRunningStatusTests {
         ])
     }
 
+    @Test("note-offs ride the note-on status at velocity zero", .tags(.unit))
+    func velocityZeroOffs() throws {
+        let bytes = makeSUT().bytes(for: score([
+            Voice(name: "m",
+                  events: [NoteEvent(pitch: 60, startTick: 0, durationTicks: 480, velocity: 80)],
+                  totalTicks: 480),
+        ]))
+        // MIDI's idiom: note-on with velocity 0 means off, so on and off
+        // share status 0x90 and the whole track runs on one status byte.
+        #expect(Array(bytes.dropFirst(41 + 8 + 5)) == [
+            0, 0x90, 60, 80,                               // note on
+            0x83, 0x60, 60, 0,                             // +480, off = vel-0 on
+            0, 0xFF, 0x2F, 0,
+        ])
+    }
+
     // MARK: - Helpers
 
     private func makeSUT() -> RunningStatusSMFWriter { RunningStatusSMFWriter() }

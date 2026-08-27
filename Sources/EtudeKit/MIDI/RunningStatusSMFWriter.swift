@@ -44,8 +44,10 @@ public struct RunningStatusSMFWriter: SMFWriting {
         for event in voice.events {
             moments.append(Moment(tick: event.startTick, isOff: false,
                                   status: 0x90, data: [event.pitch, event.velocity]))
+            // MIDI's idiom: note-on at velocity 0 means off. Offs sharing the
+            // ons' status is what lets a whole track run on one status byte.
             moments.append(Moment(tick: event.startTick + event.durationTicks, isOff: true,
-                                  status: 0x80, data: [event.pitch, 0]))
+                                  status: 0x90, data: [event.pitch, 0]))
         }
         moments.sort { ($0.tick, $0.isOff ? 0 : 1) < ($1.tick, $1.isOff ? 0 : 1) }
 
