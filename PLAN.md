@@ -506,14 +506,18 @@ tracking in every app-layer `makeSUT()` (§0.6).
 opens (manual check). *(UI tests green on iPhone 17 Pro / iOS 26.2; the
 GarageBand open remains a manual checklist item before shipping.)*
 
-### Phase 6 — Polish for store + course
+### Phase 6 — Polish for store + course (done)
 App icon, credits/licenses screen, README course map ("which test to read first"),
 plus the two capstone lessons from §0:
 - **The swap (§0.5):** write `SMFWriterSpecs` against the existing writer, add a
   running-status `SMFWriter`, prove both against the specs + round-trip property
   + re-baselined goldens, then delete the naive writer in a single commit.
+  *(Done in four commits ending with the single-commit deletion; goldens came
+  back ~23% smaller with identical events.)*
 - **The history (§0.1):** generate Étude's `HISTORY.md` from the git log; if the
   narrative has gaps, that's a retrospective finding, not something to backfill.
+  *(Done — three duplicate-subject red/green pairs and the scaffold's invisible
+  month are on record in HISTORY.md as findings.)*
 Tag `v0.1.0`.
 
 ---
