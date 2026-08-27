@@ -147,11 +147,14 @@ something to rewrite away:
 - **Three duplicated subjects** sit adjacent in the log: `820771c` repeats
   `81d2865` ("Writes the Type 1 header and tempo track"), `b4cbac8` repeats
   `6a4beec` ("Skips argumented engraving commands…"), and `3f2c108` repeats
-  `7c678d6` ("Assembles named voices…"). Each pair is a red commit followed by
-  its green twin that should have been one commit or a fixup; three other
-  instances of the same mistake *were* squashed before landing, these slipped
-  through. The lesson stands: a piped `swift test | tail` masks the test
-  run's exit code, and history discipline needs tooling, not vigilance.
+  `7c678d6` ("Assembles named voices…"). This finding originally called each
+  pair "a red commit followed by its green twin" — inspection during the
+  ADR-0005 decision showed that was wrong: each second commit landed **14–22
+  seconds** after the first with a tiny follow-up diff (one is a single
+  line). They are fixups that reused the subject instead of being amended or
+  autosquashed. The correction is recorded here, not rebased away
+  (ADR-0005), and the lesson stands either way: history discipline needs
+  tooling — unpiped test runs, `--autosquash` habits — not vigilance.
 - **Phase 0's scaffold is one commit.** The month between `9abd75d` and Phase 1
   is invisible — corpus decisions, license research, and PLAN.md drafting
   happened off-log and only surface in the 08-12/08-14 documentation commits.
