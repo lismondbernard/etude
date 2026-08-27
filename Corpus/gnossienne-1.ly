@@ -3,8 +3,14 @@
 % Gnossienne No. 1 — Erik Satie (composition public domain).
 %
 % RECONSTRUCTED performing text from the prior-art prototype (music/gnossienne.py),
-% which cleaned it from a Mutopia edition (that typesetting is CC-BY-SA — see
-% Corpus/LICENSES.md). Exercises: ENGLISH note names (cs/df style), bare
+% which cleaned it from Knute Snortum's Mutopia edition (Mutopia-2015/07/23-2035,
+% source: Éditions Salabert, Paris 1913). That typesetting is licensed
+% CC-BY-SA 4.0, and because this file's note text derives from it, THIS FILE
+% is likewise CC-BY-SA 4.0 (share-alike) — not Apache-2.0 like the Étude-typeset
+% corpus files. Attribution: typeset by Knute Snortum for the Mutopia Project,
+% https://www.mutopiaproject.org/ftp/SatieE/Gnossienne/no_1/
+% License: https://creativecommons.org/licenses/by-sa/4.0/
+% Exercises: ENGLISH note names (cs/df style), bare
 % \relative theme blocks, the `q` chord-repeat, \crossStaff grouping braces
 % (BUG-003 territory), grace notes, and — deliberately preserved verbatim —
 % a `<<` polyphony wrapper glued directly to a pitch token (BUG-005).

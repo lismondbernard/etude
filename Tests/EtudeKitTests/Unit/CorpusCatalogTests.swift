@@ -30,5 +30,9 @@ struct CorpusCatalogTests {
         #expect(CorpusPiece.all.allSatisfy { !$0.licenseBadge.isEmpty })
         let winter = CorpusPiece.all.first { $0.id == "winter-largo" }
         #expect(winter?.licenseBadge.contains("CC-BY-SA") == true)
+        // Verified against Knute Snortum's Mutopia edition (issue-free header,
+        // CC-BY-SA 4.0): the Gnossienne's typesetting is NOT public domain.
+        let gnossienne = CorpusPiece.all.first { $0.id == "gnossienne-1" }
+        #expect(gnossienne?.licenseBadge.contains("CC-BY-SA") == true)
     }
 }

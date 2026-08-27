@@ -63,7 +63,8 @@ public struct CorpusPiece: Equatable, Sendable, Identifiable {
             velocities: ["melody": 88, "accompaniment": 64, "bass": 64]),
         CorpusPiece(
             id: "gnossienne-1", title: "Gnossienne No. 1", composer: "Erik Satie",
-            velocities: ["melody": 90, "upperChords": 62, "lowerChords": 62, "bass": 70]),
+            velocities: ["melody": 90, "upperChords": 62, "lowerChords": 62, "bass": 70],
+            licenseBadge: "CC-BY-SA 4.0 typesetting"),
         CorpusPiece(
             id: "clair-de-lune", title: "Clair de Lune", composer: "Claude Debussy",
             velocities: ["rhUp": 82, "rhDown": 82, "lhUp": 72, "lhDown": 72],
