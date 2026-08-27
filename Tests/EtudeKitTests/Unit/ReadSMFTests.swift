@@ -9,7 +9,7 @@ struct ReadSMFTests {
             [voice("melody", pitches: [60, 64, 67], velocity: 92)],
             meter: Meter(beats: 3, beatUnit: 4),
             tempo: TempoMark(label: nil, beatUnit: 4, beatsPerMinute: 66))
-        let file = try makeSUT().read(SMFWriter().bytes(for: original))
+        let file = try makeSUT().read(RunningStatusSMFWriter().bytes(for: original))
 
         #expect(file.division == 480)
         #expect(file.beatsPerMinute == 66)
@@ -26,7 +26,7 @@ struct ReadSMFTests {
                 NoteEvent(pitch: 60, startTick: 480, durationTicks: 960, velocity: 80),
             ], totalTicks: 1440),
         ])
-        let file = try makeSUT().read(SMFWriter().bytes(for: original))
+        let file = try makeSUT().read(RunningStatusSMFWriter().bytes(for: original))
         #expect(file.tracks[1].events.map(\.durationTicks) == [960, 960])
     }
 
@@ -39,7 +39,7 @@ struct ReadSMFTests {
 
     @Test("delivers a typed error on a truncated file", .tags(.unit))
     func truncated() throws {
-        let bytes = SMFWriter().bytes(for: score([voice("m", pitches: [60])]))
+        let bytes = RunningStatusSMFWriter().bytes(for: score([voice("m", pitches: [60])]))
         #expect(throws: SMFReadError.truncated) {
             try makeSUT().read(Array(bytes.dropLast(6)))
         }
@@ -47,7 +47,7 @@ struct ReadSMFTests {
 
     @Test("delivers a typed error on a track missing its end marker", .tags(.unit))
     func unterminatedTrack() throws {
-        var bytes = SMFWriter().bytes(for: score([voice("m", pitches: [60])]))
+        var bytes = RunningStatusSMFWriter().bytes(for: score([voice("m", pitches: [60])]))
         // Overwrite the final End-of-Track meta with note noise.
         bytes.replaceSubrange((bytes.count - 4)..., with: [0, 0x90, 60, 80])
         #expect(throws: SMFReadError.unterminatedTrack) {

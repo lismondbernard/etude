@@ -41,8 +41,8 @@ struct BuildClairDeLuneTests {
 
         // The known-issue rendering is still pinned byte-for-byte: the golden
         // records today's output so any change to it is a loud, reviewed event.
-        let bytes = SMFWriter().bytes(for: score)
-        #expect(bytes == SMFWriter().bytes(for: score))
+        let bytes = RunningStatusSMFWriter().bytes(for: score)
+        #expect(bytes == RunningStatusSMFWriter().bytes(for: score))
         let fixture = fixtureURL("clair-de-lune.mid")
         guard FileManager.default.fileExists(atPath: fixture.path) else {
             try Data(bytes).write(to: fixture)

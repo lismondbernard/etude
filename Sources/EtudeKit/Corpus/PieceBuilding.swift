@@ -74,6 +74,6 @@ public struct EnginePieceBuilder: PieceBuilding {
         } catch {
             findings = error.findings
         }
-        return BuiltPiece(score: score, midi: SMFWriter().bytes(for: score), findings: findings)
+        return BuiltPiece(score: score, midi: RunningStatusSMFWriter().bytes(for: score), findings: findings)
     }
 }

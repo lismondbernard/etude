@@ -43,5 +43,5 @@ struct WriteSMFHeaderTests {
 
     // MARK: - Helpers
 
-    private func makeSUT() -> SMFWriter { SMFWriter() }
+    private func makeSUT() -> RunningStatusSMFWriter { RunningStatusSMFWriter() }
 }

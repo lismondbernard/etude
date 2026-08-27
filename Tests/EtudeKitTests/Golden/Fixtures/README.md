@@ -30,6 +30,14 @@ the prototype never achieved), but lhDown carries sub-piano register drift in ba
 8–13/22–24/63–65 (issue #1). The golden pins that rendering so any change to it is a
 loud, reviewed event, per ADR-0003.
 
+**Provenance (Phase 6 re-baseline):** all seven fixtures are now
+**`RunningStatusSMFWriter`** output — the §0.5 swap. The *events* are unchanged
+(the shared `SMFWriterSpecs` contract and the round-trip property proved both
+writers restore identical events before the naive writer was deleted); only the
+*encoding* differs: note-offs are velocity-0 note-ons and repeated status bytes
+are omitted, so the files are smaller. Re-baselined in the same commit that
+deleted the naive writer.
+
 | Fixture | Piece | Prototype BPM |
 |---|---|---|
 | `minuet-in-g.mid` | Petzold Minuet in G (BWV Anh. 114), full AABB | 126 |

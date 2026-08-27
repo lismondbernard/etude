@@ -1,15 +1,19 @@
 // Running-status MIDI writer — `Score` → `[UInt8]`   (Phase 6, the §0.5 swap)
 //
-// Same file shape as the naive writer (SMF Type 1 at 480 ticks per quarter:
-// meta track, then one named `MTrk` per voice) but with SMF's compression:
-// a channel event whose status byte equals the previous one omits it.
-// A meta event cancels running status, so the first channel event after one
-// always spells its status out.
+// Standard MIDI File Type 1 at 480 ticks per quarter: one tempo/meta track,
+// then one named `MTrk` per voice, with SMF's compression: a channel event
+// whose status byte equals the previous one omits it, and note-offs are
+// velocity-0 note-ons so a whole track runs on one status byte. A meta event
+// cancels running status, so the first channel event after one spells its
+// status out.
 //
-// Proven against `SMFWriterSpecs` and the round-trip property alongside the
-// naive writer; once both pass, the naive writer is deleted in one commit.
+// This replaced the deliberately naive explicit-status writer from Phase 3.
+// Both were proven against `SMFWriterSpecs` and the round-trip property
+// before the naive one was deleted — in the same single commit that
+// re-baselined the goldens. That is the §0.5 lesson: a shared behavioral
+// contract makes replacement a deletion, not a rewrite.
 
-/// The compact Standard MIDI File writer.
+/// The Standard MIDI File writer.
 public struct RunningStatusSMFWriter: SMFWriting {
     public init() {}
 

@@ -18,8 +18,8 @@ struct EmitCorpusGoldensTests {
         let score = try ScoreBuilder().score(from: file, velocities: spec.velocities)
         try Validator().validate(score)
 
-        let bytes = SMFWriter().bytes(for: score)
-        #expect(bytes == SMFWriter().bytes(for: score),
+        let bytes = RunningStatusSMFWriter().bytes(for: score)
+        #expect(bytes == RunningStatusSMFWriter().bytes(for: score),
                 "two consecutive runs must emit identical bytes")
 
         let fixture = fixtureURL(piece + ".mid")

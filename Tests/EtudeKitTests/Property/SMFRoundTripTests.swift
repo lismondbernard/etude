@@ -10,7 +10,9 @@ import EtudeKit
 /// the Phase 6 replacement safe.
 @Suite("SMF round trip")
 struct SMFRoundTripTests {
-    static let writers: [any SMFWriting] = [SMFWriter(), RunningStatusSMFWriter()]
+    // Any writer standing behind `SMFWriting` joins this array (§0.5); the
+    // naive explicit-status writer was proven here before its deletion.
+    static let writers: [any SMFWriting] = [RunningStatusSMFWriter()]
 
     @Test("write then read restores every voice's events", .tags(.property),
           arguments: 0..<writers.count)
