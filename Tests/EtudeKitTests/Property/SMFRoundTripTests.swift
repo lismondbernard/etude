@@ -10,8 +10,12 @@ import EtudeKit
 /// the Phase 6 replacement safe.
 @Suite("SMF round trip")
 struct SMFRoundTripTests {
-    @Test("write then read restores every voice's events", .tags(.property))
-    func roundTrip() throws {
+    static let writers: [any SMFWriting] = [SMFWriter(), RunningStatusSMFWriter()]
+
+    @Test("write then read restores every voice's events", .tags(.property),
+          arguments: 0..<writers.count)
+    func roundTrip(writerIndex: Int) throws {
+        let writer = Self.writers[writerIndex]
         var random = SeededRandom(seed: 0x51DE)
         for _ in 0..<30 {
             let voices = (0..<Int.random(in: 1...4, using: &random)).map { index in
@@ -23,7 +27,7 @@ struct SMFRoundTripTests {
                 tempo: TempoMark(label: nil, beatUnit: 4,
                                  beatsPerMinute: Int.random(in: 40...200, using: &random)))
 
-            let file = try SMFReader().read(SMFWriter().bytes(for: original))
+            let file = try SMFReader().read(writer.bytes(for: original))
 
             #expect(file.division == 480)
             #expect(file.beatsPerMinute == original.tempo?.beatsPerMinute)
