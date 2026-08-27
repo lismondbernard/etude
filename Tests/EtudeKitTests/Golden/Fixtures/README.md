@@ -38,6 +38,16 @@ writers restore identical events before the naive writer was deleted); only the
 are omitted, so the files are smaller. Re-baselined in the same commit that
 deleted the naive writer.
 
+**Provenance (issue #1, engine half):** `minuet-in-g.mid` and `clair-de-lune.mid`
+were re-baselined when the resolver's parallel-music rule was corrected: relative
+context THREADS through `<< >>` children in source order (LilyPond's actual
+behavior, proven bar-by-bar against Mutopia's own MIDI renderings of Clair de
+Lune, the Minuet, and the Gymnopédie ending). The Minuet change is two real
+wrong notes fixed — performed bars 45/61 (written bar 29) had D4 where Allen
+Garvin's edition renders D3; the Python prototype shared the door-context bug,
+so Phase 3's prototype-verification could not catch it. The Clair change moves
+the §2/§5 bass climbs (bars 19–24, 62–65) back into the piano's range.
+
 | Fixture | Piece | Prototype BPM |
 |---|---|---|
 | `minuet-in-g.mid` | Petzold Minuet in G (BWV Anh. 114), full AABB | 126 |

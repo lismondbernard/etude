@@ -255,24 +255,22 @@ public struct Resolver: Sendable {
                 }
                 try resolveSequence([definition], into: &state)
             case .parallel(let children):
-                // All children start together; the longest one carries the
-                // clock forward. LilyPond's relative rule: every child places
-                // from the context at the group's door, and afterwards the
-                // FIRST child's end leads.
+                // All children start together in TIME; the longest one carries
+                // the clock forward. But for OCTAVES, LilyPond resolves the
+                // children as if written sequentially: each starts where the
+                // previous child's relative context ended, and the last
+                // child's end leads afterwards. (Issue #1's engine half —
+                // Phase 3 reset every child to the door context, which walked
+                // Clair de Lune's bass an octave low per group.)
                 state.pendingTies = [:]
                 let start = state.tick
-                let entering = state.reference
-                var exitReference = state.reference
                 var furthest = start
-                for (index, child) in children.enumerated() {
+                for child in children {
                     state.tick = start
-                    state.reference = entering
                     try resolveSequence([child], into: &state)
                     state.pendingTies = [:]
-                    if index == 0 { exitReference = state.reference }
                     furthest = max(furthest, state.tick)
                 }
-                state.reference = exitReference
                 state.tick = furthest
             case .tuplet(let numerator, let denominator, let body):
                 // Written durations inside the group scale by the fraction;

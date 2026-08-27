@@ -16,17 +16,22 @@ import EtudeKit
 /// the pipeline throws a finding — there is no clamp to hide behind.
 @Suite("BUG-004: clamped sub-audible bass")
 struct BUG004_ClampedSubAudibleBass {
-    @Test("the reconstructed ending figure keeps its bass at E2", .tags(.regression))
+    @Test("the reconstructed ending figure keeps its pedal an octave under the voicelet", .tags(.regression))
     func exactEndingFigure() throws {
         // Bass context, then the original (unreduced) bar: an upper voicelet
-        // parallel to the sustained low e.
+        // parallel to the sustained low e — the shape of Mutopia's
+        // `<< \context Voice {c'4\rest b e} e,2. >>` ending bar.
         let source = "\\relative c { e2. << { c'4\\rest b4 e4 } { e,2. } >> <g a,>2. <d a d,>2. }"
         let music = try Parser().parseMusic(try Tokenizer().tokenize(source))
         let resolved = try Resolver().resolve(music)
 
-        // e (E3), voicelet b/e, sustained E2 — and the closing chords place
-        // from the voicelet's E4, all comfortably above the audible floor.
-        #expect(resolved.notes.map(\.midiNote) == [52, 59, 64, 40, 67, 57, 62, 57, 50])
+        // e (E3); voicelet b/e climbing to E4; the pedal e, threads from the
+        // voicelet's E4 down one octave to E3; the closing chords continue
+        // from the pedal. These are LilyPond's pitches for this text —
+        // verified against Mutopia's own MIDI of the Gymnopédie ending
+        // (issue #1's engine half corrected the old door-context rule, whose
+        // expectations here had the closing chords an octave high).
+        #expect(resolved.notes.map(\.midiNote) == [52, 59, 64, 52, 55, 45, 50, 45, 38])
         #expect(resolved.notes.allSatisfy { $0.midiNote >= 21 })
     }
 

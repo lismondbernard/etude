@@ -17,10 +17,15 @@ struct ResolveParallelMusicTests {
         #expect(resolved.totalTicks == 1440)
     }
 
-    @Test("each child places from the context at the group's door", .tags(.unit))
-    func childrenPlaceFromEnteringContext() throws {
-        // LilyPond's rule: every simultaneous expression starts from the
-        // context BEFORE `<<`, and afterwards the FIRST child's end leads.
+    @Test("relative context threads through children in source order", .tags(.unit))
+    func childrenThreadTheRelativeContext() throws {
+        // LilyPond's rule, and the issue-#1 lesson: for octave purposes the
+        // children of `<< … >>` resolve AS IF WRITTEN SEQUENTIALLY — each
+        // starts where the previous child's context ended, and the LAST
+        // child's end leads afterwards. (Phase 3 encoded the intuitive
+        // every-child-from-the-door rule instead; LilyPond's own MIDI of the
+        // Mutopia Clair de Lune refuted it, bar by bar, in the bass climb of
+        // bars 19–24.)
         let resolved = try makeSUT().resolve([
             .relative(anchor: NoteToken(name: "c", octaveMarks: 1), body: [
                 note("c", dur(4)),
@@ -31,9 +36,9 @@ struct ResolveParallelMusicTests {
                 note("b", dur(4)),
             ]),
         ])
-        // Child two's g places from C4 (down to G3) — NOT from child one's F4.
-        // The closing b places from child one's F4 — NOT from child two's A3.
-        #expect(resolved.notes.map(\.midiNote) == [60, 64, 65, 55, 57, 71])
+        // Child two's g places from child one's F4 (up to G4) — NOT from C4.
+        // The closing b places from child two's A4 — NOT from child one's F4.
+        #expect(resolved.notes.map(\.midiNote) == [60, 64, 65, 67, 69, 71])
     }
 
     @Test("the Gnossienne ossia wrapper resolves to the same A-flats", .tags(.unit))
