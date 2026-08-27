@@ -59,10 +59,23 @@ public domain; vendored typesettings carry their own licenses — see
 
 ## Where to start reading (the course map)
 
-1. [`PLAN.md`](PLAN.md) — the whole design, phase by phase.
-2. `docs/adr/` — why the load-bearing decisions were made.
-3. `Tests/EtudeKitTests/Regression/` + `docs/lessons/` — real bugs, and the tests that
-   now guard against them.
+Read [`PLAN.md`](PLAN.md) §0 first — the method the rest of the repo demonstrates — then
+follow the tests in this order. Each stop teaches one technique; the file named is the
+best first example of it.
+
+| # | Read | The lesson |
+|---|---|---|
+| 1 | [`Tests/EtudeKitTests/Unit/ResolveRelativeOctavesTests.swift`](Tests/EtudeKitTests/Unit/ResolveRelativeOctavesTests.swift) | A unit suite shaped by §0.6: `makeSUT()`, sample builders, three-line test bodies — one musical rule pinned per test. |
+| 2 | [`Tests/EtudeKitTests/Helpers/SMFWriterSpecs.swift`](Tests/EtudeKitTests/Helpers/SMFWriterSpecs.swift) | The §0.5 capstone: a reusable behavioral contract for a seam. Two writers passed it; then the naive one was **deleted in a single commit** (find it in the log) with zero risk. |
+| 3 | [`Tests/EtudeKitTests/Property/SMFRoundTripTests.swift`](Tests/EtudeKitTests/Property/SMFRoundTripTests.swift) | A hand-rolled property test — and how to restate a law honestly when you find its domain edge (same-pitch overlap is MIDI-ambiguous). |
+| 4 | [`Tests/EtudeKitTests/Golden/EmitCorpusGoldensTests.swift`](Tests/EtudeKitTests/Golden/EmitCorpusGoldensTests.swift) | Golden files: record-if-missing, byte-stable, and re-baselined only as a loud, reviewed event (`Fixtures/README.md` keeps the provenance). |
+| 5 | [`Tests/EtudeKitTests/Regression/`](Tests/EtudeKitTests/Regression/) + [`docs/lessons/`](docs/lessons/) | Six real bugs from the prototype, each reconstructed as a named, story-carrying regression test. |
+| 6 | [`Tests/EtudeKitTests/Acceptance/BuildClairDeLuneTests.swift`](Tests/EtudeKitTests/Acceptance/BuildClairDeLuneTests.swift) | The boss fight: acceptance with fingerprints, and `withKnownIssue` keeping an open defect loud instead of skipped (ADR-0003, issue #1). |
+| 7 | [`App/Etude/EtudeTests/PieceDetailViewModelTests.swift`](App/Etude/EtudeTests/PieceDetailViewModelTests.swift) | The app layer: view models tested against spies through §0.3 seams, with memory-leak tracking in every `makeSUT()`. |
+| 8 | [`App/Etude/EtudeUITests/`](App/Etude/EtudeUITests/) | Page-object UI flows — including the one that caught a real observability bug (see "Playback state is stored where Observation can see it" in the log). |
+
+For the *why* behind the load-bearing decisions, `docs/adr/` is short and numbered; for
+how the codebase got here commit by commit, see [`HISTORY.md`](HISTORY.md).
 
 ## How this is built
 
