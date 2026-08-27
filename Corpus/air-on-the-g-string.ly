@@ -12,7 +12,10 @@
 % NOTE: the guitar's partial chord-to-note ties (`< fis a >8 ~ a`) SUSTAIN the
 % shared pitch here, as LilyPond does; the prototype re-attacked it, so this
 % engine emits two fewer guitar note events than the prototype's MIDI.
-% Original edition: https://www.mutopiaproject.org/ (search "Air on the G String BWV 1068")
+% Original edition: Mike Blackstock's Mutopia flute+guitar typesetting — public
+% domain, verified ("placed in the public domain by the typesetter"; "New
+% adaptation from Bach-Gesellschaft"; Mutopia-2008/10/28-1534).
+% https://www.mutopiaproject.org/ftp/BachJS/BWV1068/bach_air_bmv_1068/
 
 \header {
   title = "Air on the G String"

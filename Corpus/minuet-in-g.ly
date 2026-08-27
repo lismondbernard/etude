@@ -7,7 +7,10 @@
 % its section twice, 64 performed bars. Opening melody D5 G4 A4 B4 C5
 % (PLAN.md Appendix B). Ornaments are performed: 4 mordents and 1 prall walk
 % the G-major scale (hence \key), 1 grace steals from its host.
-% Original edition: https://www.mutopiaproject.org/ (search "Petzold Minuet BWV Anh 114")
+% Original edition: Allen Garvin's Mutopia typesetting — public domain, verified
+% ("placed in the public domain by the typesetter"; source Bach-Gesellschaft;
+% Mutopia-2017/01/19-75).
+% https://www.mutopiaproject.org/ftp/BachJS/BWVAnh114/anna-magdalena-04/
 
 \header {
   title = "Minuet in G major"
