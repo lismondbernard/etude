@@ -15,9 +15,11 @@ This bug was never "fixed" — it was INSTITUTIONALIZED as the Validator's voice
 alignment invariant, so the whole class of failure is loud forever. The Swift
 rewrite then passed it: all four voices align at 72 bars of 9/8, section by
 section, and the compact and expanded sources agree note for note
-(`ClairDeLuneSourcesAgreeTests`). What remains open is different and smaller:
-lhDown's sub-piano register drift, pinned by the register invariant as
-issue #1 (`BuildClairDeLuneTests`, `withKnownIssue` — ADR-0003).
+(`ClairDeLuneSourcesAgreeTests`). One residue stayed open past v0.1.0 —
+lhDown's sub-piano register drift, kept loud by the register invariant as
+issue #1 (`withKnownIssue`, ADR-0003) — until recovering the Mutopia original
+exposed its two causes: a mis-"corrected" anchor and BUG-007's resolver rule.
+Both fixed; the piece now validates clean.
 
 ## Lesson
 Institutionalize the failure class, not the fix. The invariant that exposed the

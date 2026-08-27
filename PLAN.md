@@ -384,7 +384,7 @@ comment: symptom → root cause → the guard now in place.
 
 ---
 
-## 7. The Boss Fight — Clair de Lune (standing issue #1)
+## 7. The Boss Fight — Clair de Lune (issue #1: CLOSED)
 
 Debussy's score (Mutopia `.ly`) combines `\parallelMusic` (round-robin bar
 distribution across voices), two independent voices per staff, cross-staff
@@ -393,11 +393,15 @@ writing, nested tuplets, and irregular spacing. The prototype correctly expanded
 section 1 came out 91/46/57/54 beats across the four voices). **Phase 4 status:
 the timing is SOLVED** — the Swift engine aligns all four voices at 72 bars of
 9/8, section by section, and the compact and expanded sources resolve
-identically. What remains, recorded as issue #1, is lhDown register drift below
-the piano's floor in bars 8–13/22–24/63–65: octave marks apparently lost when
-the prototype cleaned the Mutopia edition (LilyPond's own rules yield the same
-sub-audible pitches from this text). Fix path: recover the original Mutopia
-source and re-verify those marks. Carried forward as:
+identically. The residue — lhDown register drift below the piano's floor in
+bars 8–13/22–24/63–65, recorded as issue #1 — shipped visible in v0.1.0 and
+was then closed by executing its own fix path: recovering the original Mutopia
+source revealed the diagnosis ("octave marks lost in cleaning") was wrong on
+both counts. The note text was intact; a Phase 4 anchor "correction" had
+diverged from the original, and the resolver's parallel-music octave rule was
+itself wrong in a way the prototype shared (BUG-007 — LilyPond threads
+relative context through `<< >>` children sequentially). Both fixes were
+proven against Mutopia's own MIDI renderings. Carried forward as:
 - `Corpus/clair-de-lune.ly` vendored,
 - a `ParallelMusicExpander` in the Resolver (port the round-robin logic — it
   worked),
@@ -537,4 +541,4 @@ Tag `v0.1.0`.
 | Winter Largo (RV 297) | 5 (solo, 2 violins, viola, cello) | 18 | E♭-major solo (D♯/A♯ enharmonic in source) | ~52 BPM, pizzicato accompaniment |
 | Gymnopédie No. 1 | 3 (melody, accompaniment, bass) | 78 | F♯5 A5 G5 F♯5 | Gmaj7/Dmaj7 alternation; "Lent" |
 | Gnossienne No. 1 | 4 (melody, upper, lower, bass) | 82 | C5 E♭5 D5 C5 B4 | English note names, bare `\relative`, `q` chord-repeat, low-F pedal |
-| Clair de Lune | 4 voices | 72 | F4+A♭4, F5+A♭5 thirds | Aligned since Phase 4; lhDown register drift = KNOWN ISSUE #1, `withKnownIssue` |
+| Clair de Lune | 4 voices | 72 | F4+A♭4, F5+A♭5 thirds | Aligned since Phase 4; register drift (issue #1) closed post-v0.1.0 against the recovered Mutopia original — no known issues remain |

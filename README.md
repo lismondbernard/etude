@@ -15,9 +15,11 @@ golden-file/snapshot tests, invariant validation, regression tests reconstructed
 historical bugs, and XCUITest UI flows with the Page Object pattern.
 
 > **Project policy: never ship a subtly wrong version.** A correct excerpt beats an
-> incorrect whole. Where the engine cannot yet render a piece faithfully — today, Debussy's
-> **Clair de Lune** — we mark it a *visible known issue* rather than disabling the test or
-> shipping something that merely sounds plausible. See
+> incorrect whole. Where the engine cannot yet render a piece faithfully, we mark it a
+> *visible known issue* rather than disabling the test or shipping something that merely
+> sounds plausible. Debussy's **Clair de Lune** shipped v0.1.0 exactly that way — its
+> register drift stayed loud (issue #1) until the original Mutopia source was recovered
+> and both root causes fixed. See
 > [`docs/adr/0003-known-issue-not-skip.md`](docs/adr/0003-known-issue-not-skip.md).
 
 ## Layout

@@ -15,7 +15,8 @@ ADR-0001: the Validator THROWS structured findings — register sanity is a rule
 not a repair. `BUG004_ClampedSubAudibleBass` proves the reconstructed ending
 figure resolves in register and that drift throws instead of clamping. The rule
 promptly caught two real defects Phase 3–4: the vendored Gymnopédie bass marks,
-and Clair de Lune's lhDown drift (issue #1).
+and Clair de Lune's lhDown drift (issue #1, since closed — its root causes are
+BUG-007's story).
 
 ## Lesson
 Invariants beat defensive code. A clamp turns a loud bug into a quiet one; a

@@ -22,6 +22,7 @@ end — recorded, not repaired.
 | Phase 4 — the boss fight | 2026-08-25 | `\parallelMusic`, multipliers, value-captured definitions; Clair de Lune aligns; issue #1 recorded | `dff33e4` … `c5e55b0` |
 | Phase 5 — App MVP | 2026-08-26 | Catalog, seams, view models against spies, page-object UI flows; a UI test catches a real bug | `255bcd1` … `d9ea28c` |
 | Phase 6 — polish + capstone | 2026-08-26 | The writer swap (§0.5), credits screen, icon, course map, this file, v0.1.0 | `92285d0` … tag `v0.1.0` |
+| Post-release — issue #1 | 2026-08-26 | Clair de Lune's register drift closed: the recovered Mutopia original exposed a mis-"corrected" anchor AND a resolver bug (BUG-007) the prototype shared; Minuet gained two corrected notes in the fallout | after `v0.1.0` |
 
 ## Architecture evolution
 

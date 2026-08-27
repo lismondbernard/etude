@@ -11,4 +11,5 @@ cause → the guard). Use `TEMPLATE.md`.
 | BUG-003 | `\crossStaff { }` treated as parallel separator | Parser | guarded (Phase 2) | [story](bug-003-crossstaff-braces-split-voices.md) |
 | BUG-004 | Sub-audible octave-0 bass; clamping hid it | Resolver/Validator | guarded (Phase 3) | [story](bug-004-clamp-hid-subaudible-bass.md) |
 | BUG-005 | Polyphony wrapper glued to a pitch broke chords | Tokenizer | guarded (Phase 1) | [story](bug-005-glued-polyphony-wrapper.md) |
-| BUG-006 | Voice-length mismatch (Clair de Lune) | Validator | institutionalized; alignment SOLVED in Phase 4, register drift open as issue #1 | [story](bug-006-voice-length-mismatch.md) |
+| BUG-006 | Voice-length mismatch (Clair de Lune) | Validator | institutionalized; alignment SOLVED in Phase 4, register drift closed with issue #1 | [story](bug-006-voice-length-mismatch.md) |
+| BUG-007 | Parallel music placed from the door, not the thread | Resolver | guarded (issue #1) — the only bug born in THIS engine, and the prototype shared it | [story](bug-007-parallel-relative-door-context.md) |
