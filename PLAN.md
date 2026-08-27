@@ -548,7 +548,7 @@ history publishes as-is or is squashed first — and record the reasoning as
 HISTORY.md already records its defects as findings; rewriting would erase the
 very evidence the course teaches from. The default position is **publish
 as-is** — a history with three documented duplicate subjects is a better
-lesson than a laundered one.
+lesson than a laundered one. *(Decided: publish as-is — **ADR-0005**.)*
 
 **7.3 Go public.** Flip the repo to public with: a description and topics;
 retroactive lightweight tags at each `PLAN: mark Phase N done` commit so every
