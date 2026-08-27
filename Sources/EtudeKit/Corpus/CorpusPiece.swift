@@ -68,7 +68,6 @@ public struct CorpusPiece: Equatable, Sendable, Identifiable {
             id: "clair-de-lune", title: "Clair de Lune", composer: "Claude Debussy",
             velocities: ["rhUp": 82, "rhDown": 82, "lhUp": 72, "lhDown": 72],
             voices: ["rhUp", "rhDown", "lhUp", "lhDown"],
-            assumedBeatsPerMinute: 60,
-            knownIssue: "lhDown register drift below A0 — issue #1"),
+            assumedBeatsPerMinute: 60),
     ]
 }

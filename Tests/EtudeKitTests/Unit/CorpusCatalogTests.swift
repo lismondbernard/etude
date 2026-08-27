@@ -10,10 +10,12 @@ struct CorpusCatalogTests {
         #expect(CorpusPiece.all.allSatisfy { !$0.title.isEmpty && !$0.composer.isEmpty })
     }
 
-    @Test("only Clair de Lune carries a known issue", .tags(.unit))
+    @Test("no piece carries a known issue since issue #1 closed", .tags(.unit))
     func knownIssues() throws {
+        // The field stays: any future defect ships visible (ADR-0003), and
+        // the goldens skip flagged pieces until the wound is closed.
         let flagged = CorpusPiece.all.filter { $0.knownIssue != nil }
-        #expect(flagged.map(\.id) == ["clair-de-lune"])
+        #expect(flagged.isEmpty)
     }
 
     @Test("pieces without a score block name their voices explicitly", .tags(.unit))

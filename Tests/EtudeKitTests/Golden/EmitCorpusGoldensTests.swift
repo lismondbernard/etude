@@ -15,7 +15,16 @@ struct EmitCorpusGoldensTests {
         let spec = CorpusPiece.all.first { $0.id == piece }!
         let source = try String(contentsOf: corpusURL(piece), encoding: .utf8)
         let file = try Parser().parseFile(try Tokenizer().tokenize(source))
-        let score = try ScoreBuilder().score(from: file, velocities: spec.velocities)
+        // Build exactly as the catalog specifies: sources without a \score
+        // block (Clair de Lune) name their voices explicitly.
+        let score: Score = if let voices = spec.voices {
+            try ScoreBuilder().score(
+                from: file, voices: voices, title: spec.title,
+                velocities: spec.velocities,
+                assumingBeatsPerMinute: spec.assumedBeatsPerMinute)
+        } else {
+            try ScoreBuilder().score(from: file, velocities: spec.velocities)
+        }
         try Validator().validate(score)
 
         let bytes = RunningStatusSMFWriter().bytes(for: score)

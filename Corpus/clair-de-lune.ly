@@ -91,11 +91,14 @@ myExplicitPageBreak = { \pageBreak }
 rhUp = \relative c' \rhUpRed
 rhDown = \relative c' \rhDownGreen
 lhUp = \relative c' \lhUpBlue
-% Phase 4 correction: this anchor read c' in the source as vendored, floating
-% the left hand's LOWER voice around middle C — above lhUp. The hand-corrected
-% expanded copy (clair-de-lune.expanded.ly) anchors it at c, like every other
-% lhDown section, and the register only makes sense there.
-lhDown= \relative c, \lhDownGrey
+% Issue #1 correction: this anchor reads c' in Keith O'Hara's Mutopia original
+% (Mutopia-2010/12/21-1778), and c' is restored here. Phase 4 had "corrected"
+% it to c, on the expanded copy's authority — but that copy descended from the
+% prototype's cleaning, and the resolver's parallel-music rule was then also
+% wrong (children placed from the group's door instead of threading), which
+% made c, LOOK right. With the rule fixed against LilyPond's own rendering,
+% the original's c' puts every bar of lhDown on the piano.
+lhDown= \relative c' \lhDownGrey
 
 \parallelMusic #'(rhUpRed rhDownGreen lhUpBlue lhDownGrey)
 {

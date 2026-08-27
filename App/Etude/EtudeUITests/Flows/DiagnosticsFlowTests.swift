@@ -1,14 +1,17 @@
 import XCTest
 
-/// Failure surfacing (PLAN.md §8): Clair de Lune builds, and its recorded
-/// register drift is PRESENTED — the UI is as honest as the tests
-/// (ADR-0001, ADR-0003).
+/// Failure surfacing (PLAN.md §8): diagnostics tell the truth either way.
+/// While issue #1 was open this flow asserted Clair de Lune PRESENTED its
+/// register findings (ADR-0001, ADR-0003); with the issue closed, the former
+/// boss fight earns the same green seal as everything else. (The
+/// findings-presentation formatting stays covered by DiagnosticsPresenter's
+/// unit tests.)
 final class DiagnosticsFlowTests: XCTestCase {
     override func setUp() {
         continueAfterFailure = false
     }
 
-    func testClairDeLuneShowsItsFindings() {
+    func testFormerBossFightShowsItsGreenSeal() {
         let app = XCUIApplication()
         app.launchArguments = ["-uiTesting"]
         app.launch()
@@ -18,11 +21,8 @@ final class DiagnosticsFlowTests: XCTestCase {
 
         let diagnostics = detail.openDiagnostics()
         XCTAssertTrue(diagnostics.isDisplayed)
-        XCTAssertTrue(diagnostics.summary.label.contains("finding"),
-                      "the summary should count findings, not hide them")
-        XCTAssertTrue(diagnostics.finding(at: 0).waitForExistence(timeout: 5))
-        XCTAssertTrue(diagnostics.finding(at: 0).label.contains("lhDown"),
-                      "the drifted voice is named")
+        XCTAssertTrue(diagnostics.summary.label.contains("All invariants hold"),
+                      "issue #1 is closed; Clair de Lune validates clean")
     }
 
     func testCleanPieceShowsItsGreenSeal() {

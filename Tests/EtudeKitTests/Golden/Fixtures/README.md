@@ -38,6 +38,11 @@ writers restore identical events before the naive writer was deleted); only the
 are omitted, so the files are smaller. Re-baselined in the same commit that
 deleted the naive writer.
 
+**Provenance (issue #1, closed):** `clair-de-lune.mid` was re-baselined once more
+when the corpus's §1 `lhDown` anchor was restored to the recovered Mutopia
+original's `c'` — the last register drift gone, the piece now flows through this
+standard golden test like every other (no known issue excludes it).
+
 **Provenance (issue #1, engine half):** `minuet-in-g.mid` and `clair-de-lune.mid`
 were re-baselined when the resolver's parallel-music rule was corrected: relative
 context THREADS through `<< >>` children in source order (LilyPond's actual

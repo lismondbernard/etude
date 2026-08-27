@@ -356,7 +356,7 @@ df,16\( af' df f! af df \clef treble f8 af df f af df\)
 <df,, af'df f>2.\arpeggio r4.
 }
  }
-         \new Voice { \relative c, {
+         \new Voice { \relative c' { % issue #1: c' per the Mutopia original (was hand-"corrected" to c,)
 \dynamicUp \stemDown s8*9_\markup\italic"con sordina"
 s8*9
 s8*9
