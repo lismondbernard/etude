@@ -1,3 +1,4 @@
+import AVFoundation
 import XCTest
 import EtudeKit
 @testable import Etude
@@ -20,6 +21,16 @@ final class SystemMIDIPlayerTests: XCTestCase {
         let sut = makeSUT(soundBankURL: nil)
 
         XCTAssertThrowsError(try sut.load(shortMIDI()))
+    }
+
+    func testLoadClaimsThePlaybackAudioSession() throws {
+        let bank = try XCTUnwrap(SoundBank.bundledPiano)
+        let sut = makeSUT(soundBankURL: bank)
+
+        try sut.load(shortMIDI())
+
+        XCTAssertEqual(AVAudioSession.sharedInstance().category, .playback,
+                       "the default .soloAmbient category is muted by the ring/silent switch")
     }
 
     func testLoadsRealMIDIThroughTheBundledBank() throws {

@@ -33,6 +33,9 @@ final class SystemMIDIPlayer: MIDIPlaying {
               FileManager.default.fileExists(atPath: soundBankURL.path) else {
             throw SoundBankMissingError(url: soundBankURL)
         }
+        // .playback, not the default .soloAmbient: audition must survive the
+        // ring/silent switch (issue #3's second cause).
+        try AVAudioSession.sharedInstance().setCategory(.playback)
         player = try AVMIDIPlayer(data: midi, soundBankURL: soundBankURL)
         player?.prepareToPlay()
     }
