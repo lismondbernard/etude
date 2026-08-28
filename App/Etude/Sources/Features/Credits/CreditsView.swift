@@ -11,6 +11,12 @@ struct CreditsView: View {
                     .font(.footnote)
                     .accessibilityIdentifier("credits.app")
             }
+            Section("Sound") {
+                Text(CreditsPresenter.soundBankCredit)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .accessibilityIdentifier("credits.soundbank")
+            }
             Section("Pieces") {
                 ForEach(CorpusPiece.all) { piece in
                     VStack(alignment: .leading, spacing: 2) {

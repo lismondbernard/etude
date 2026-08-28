@@ -16,6 +16,10 @@ struct CreditsScreen {
         element("credits.piece.\(pieceID)").waitForExistence(timeout: 5)
     }
 
+    var showsSoundBankCredit: Bool {
+        element("credits.soundbank").waitForExistence(timeout: 5)
+    }
+
     private func element(_ identifier: String) -> XCUIElement {
         app.descendants(matching: .any)[identifier].firstMatch
     }

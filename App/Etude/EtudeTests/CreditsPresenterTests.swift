@@ -24,6 +24,12 @@ final class CreditsPresenterTests: XCTestCase {
                        "Composition: public domain. Typesetting: CC-BY-SA typesetting.")
     }
 
+    func testSoundBankCreditNamesTheFontItsSourceAndItsLicense() {
+        XCTAssertTrue(CreditsPresenter.soundBankCredit.contains("Upright Piano KW"))
+        XCTAssertTrue(CreditsPresenter.soundBankCredit.contains("FreePats"))
+        XCTAssertTrue(CreditsPresenter.soundBankCredit.contains("CC0"))
+    }
+
     func testAppCreditPointsAtTheAuthoritativeLicenseFile() {
         XCTAssertTrue(CreditsPresenter.appCredit.contains("Apache-2.0"))
         XCTAssertTrue(CreditsPresenter.appCredit.contains("Corpus/LICENSES.md"))

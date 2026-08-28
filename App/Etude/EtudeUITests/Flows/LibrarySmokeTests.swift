@@ -30,5 +30,7 @@ final class LibrarySmokeTests: XCTestCase {
         XCTAssertTrue(credits.showsAppCredit, "the Apache-2.0 app credit is stated")
         XCTAssertTrue(credits.showsCredit(for: "winter-largo"),
                       "the CC-BY-SA typesetting is credited, not just badged")
+        XCTAssertTrue(credits.showsSoundBankCredit,
+                      "the bundled CC0 piano SoundFont is credited (issue #3)")
     }
 }
