@@ -33,6 +33,22 @@ only.
    Has a downstream consumer — see "Foreign Words marketing assets" below.
 4. Verify each piece's opening-melody fingerprint against PLAN.md Appendix B.
 
+## App sound bank (not corpus, recorded here as the licensing registry)
+
+The app bundles one SoundFont so `AVMIDIPlayer` has instrument samples on iOS
+(which ships no built-in bank — GitHub issue #3):
+
+- **"Upright Piano KW" (small SF2 variant, 2019-07-03)** from the
+  [FreePats project](https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html#UprightKW)
+  — **CC0 1.0 public domain dedication, verified**: the license text and the
+  authors' provenance readme are vendored beside the font in
+  `App/Etude/Resources/SoundBank/` and ship inside the app bundle.
+  Recorded from a Kawai upright piano by Gonzalo and Roberto (January 2017),
+  edited with free software.
+- One piano bank covers the whole corpus because the SMF writer emits no
+  program-change events; every track renders as GM program 0.
+- The credits screen states this credit in-app (`CreditsPresenter.soundBankCredit`).
+
 ## Prototype provenance
 The initial golden `.mid` fixtures under
 `../Tests/EtudeKitTests/Golden/Fixtures/` are the Python prototype's output. The prototype
