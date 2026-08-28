@@ -20,7 +20,7 @@ struct PieceDetailView: View {
     private static func makePlayer() -> any MIDIPlaying {
         ProcessInfo.processInfo.arguments.contains("-uiTesting")
             ? SilentMIDIPlayer()
-            : SystemMIDIPlayer()
+            : SystemMIDIPlayer(soundBankURL: SoundBank.bundledPiano)
     }
 
     var body: some View {

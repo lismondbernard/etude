@@ -13,14 +13,27 @@ protocol MIDIPlaying: AnyObject {
 
 /// `AVMIDIPlayer` behind the seam. AVMIDIPlayer has no pause; stopping keeps
 /// `currentPosition`, so play-after-pause resumes where it left off.
+///
+/// The player REQUIRES a sound bank: on iOS a nil `soundBankURL` renders
+/// silence while reporting success (issue #3) — the worst kind of failure,
+/// so a missing bank throws out of `load` instead.
 @MainActor
 final class SystemMIDIPlayer: MIDIPlaying {
+    private let soundBankURL: URL?
     private var player: AVMIDIPlayer?
+
+    init(soundBankURL: URL?) {
+        self.soundBankURL = soundBankURL
+    }
 
     var isPlaying: Bool { player?.isPlaying ?? false }
 
     func load(_ midi: Data) throws {
-        player = try AVMIDIPlayer(data: midi, soundBankURL: nil)
+        guard let soundBankURL,
+              FileManager.default.fileExists(atPath: soundBankURL.path) else {
+            throw SoundBankMissingError(url: soundBankURL)
+        }
+        player = try AVMIDIPlayer(data: midi, soundBankURL: soundBankURL)
         player?.prepareToPlay()
     }
 
