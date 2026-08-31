@@ -23,11 +23,18 @@ final class ScreenshotCaptureTests: XCTestCase {
         app.launchArguments = ["-uiTesting"]
         app.launch()
 
+        // The share sheet is captured LAST: dismissing its iPad popover and
+        // navigating afterwards is flaky, so nothing follows it.
         let library = LibraryScreen(app: app)
         XCTAssertTrue(library.isDisplayed)
         snap("04-library")
 
-        let detail = library.openPiece("clair-de-lune")
+        let credits = library.openCredits()
+        XCTAssertTrue(credits.isDisplayed)
+        snap("05-credits")
+        app.navigationBars.buttons.firstMatch.tap()
+
+        let detail = LibraryScreen(app: app).openPiece("clair-de-lune")
         detail.buildAndWait()
         detail.tapPlay()
         XCTAssertTrue(detail.showsPause)
@@ -41,13 +48,6 @@ final class ScreenshotCaptureTests: XCTestCase {
         detail.tapExport()
         XCTAssertTrue(detail.showsShareSheet)
         snap("03-export")
-        app.tap() // dismiss the share sheet
-
-        _ = app.navigationBars.buttons.firstMatch.waitForExistence(timeout: 5)
-        app.navigationBars.buttons.firstMatch.tap()
-        let credits = library.openCredits()
-        XCTAssertTrue(credits.isDisplayed)
-        snap("05-credits")
     }
 
     /// Full-screen capture (status bar included) so the export is directly
