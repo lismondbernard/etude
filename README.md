@@ -8,6 +8,9 @@ validates it against musical invariants, and emits standard **Type-1 MIDI** file
 SwiftUI app browses a bundled corpus of public-domain classical pieces, builds them
 on-device, plays them, and exports the `.mid` for GarageBand, games, and DAWs.
 
+**Étude 1.0 is [free on the App Store](https://apps.apple.com/app/id6806620869)** (iPhone
+and iPad), or build it from source below.
+
 It is also, deliberately, a **course in testing architecture**. The pipeline is a pure,
 UI-free Swift package (`EtudeKit`) so its tests run fast on any platform. Every layer
 carries its own lesson: table-driven unit tests, hand-rolled property-based tests,
