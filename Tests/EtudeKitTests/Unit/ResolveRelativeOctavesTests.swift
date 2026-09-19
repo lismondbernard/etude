@@ -48,8 +48,9 @@ struct ResolveRelativeOctavesTests {
 
     @Test("alterations never change the chosen octave", .tags(.unit))
     func alterationsDoNotMovePlacement() throws {
-        // b to f: three letters down by letter count, even though b→f
-        // downward is an augmented fourth in semitones.
+        // b to fis: the letters b, a, g, f are three steps down, within a
+        // fourth, so the note is placed below; the sharp is applied after
+        // placement and cannot move it to another octave.
         let resolved = try makeSUT().resolve([
             .relative(anchor: NoteToken(name: "c", octaveMarks: 1),
                       body: [note("b", dur(4)), note("fis")]),
