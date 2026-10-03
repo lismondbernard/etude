@@ -2,10 +2,13 @@ import Testing
 import EtudeKit
 
 /// The writer/reader law (PLAN.md §4.5): write→read is the identity on
-/// events, for voices with no same-pitch overlap. (Overlapping equal pitches
-/// are ambiguous in MIDI itself — on/off pairing cannot tell nested from
-/// sequential — so they are outside the law, not outside the tests: the
-/// corpus goldens cover the one real case, byte for byte.) Any writer swapped
+/// events, for voices in tick order with no same-pitch overlap. (The reader
+/// returns events sorted by tick, so a voice assembled out of order, as the
+/// corpus's parallel groups can be, comes back reordered rather than equal:
+/// the same events, sorted. Overlapping equal pitches are ambiguous in MIDI
+/// itself — on/off pairing cannot tell nested from sequential — so they are
+/// outside the law, not outside the tests: the corpus goldens cover the one
+/// real case, byte for byte.) Any writer swapped
 /// in behind `SMFWriting` (§0.5) must keep this property — it is what makes
 /// the Phase 6 replacement safe.
 @Suite("SMF round trip")
