@@ -8,7 +8,7 @@ validates it against musical invariants, and emits standard **Type-1 MIDI** file
 SwiftUI app browses a bundled corpus of public-domain classical pieces, builds them
 on-device, plays them, and exports the `.mid` for GarageBand, games, and DAWs.
 
-**Étude 1.0 is [free on the App Store](https://apps.apple.com/app/id6806620869)** (iPhone
+**Étude 1.0 is [free on the App Store](https://apps.apple.com/app/apple-store/id6806620869?pt=204210&ct=github-readme&mt=8)** (iPhone
 and iPad), or build it from source below.
 
 It is also, deliberately, a **course in testing architecture**. The pipeline is a pure,
