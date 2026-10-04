@@ -16,4 +16,14 @@ final class BundledCorpusTests: XCTestCase {
         let ghost = CorpusPiece(id: "ghost-piece", title: "Ghost", composer: "Nobody")
         XCTAssertThrowsError(try sut.source(for: ghost))
     }
+
+    /// The `-uiTesting-corpusFailsOnce` seam: the first read fails the way a
+    /// missing source does, the next reads come from the bundle.
+    func testTheFailOnceCorpusFailsThenRecovers() throws {
+        let sut = FailOnceCorpus(wrapping: BundledCorpus())
+        let piece = try XCTUnwrap(CorpusPiece.all.first)
+
+        XCTAssertThrowsError(try sut.source(for: piece))
+        XCTAssertFalse(try sut.source(for: piece).isEmpty)
+    }
 }

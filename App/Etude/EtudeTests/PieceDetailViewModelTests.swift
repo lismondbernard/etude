@@ -31,6 +31,19 @@ final class PieceDetailViewModelTests: XCTestCase {
         XCTAssertTrue(sut.tracks.isEmpty)
     }
 
+    func testABuildCanBeRetriedAfterAFailure() async {
+        let (sut, builder, _) = makeSUT()
+        builder.stub(voiceNames: ["melody"])
+        builder.stubbedError = StubError.broken
+        await sut.build()
+
+        builder.stubbedError = nil
+        await sut.build()
+
+        XCTAssertEqual(sut.phase, .built, "a failure is not the end of the piece")
+        XCTAssertEqual(sut.tracks.map(\.name), ["melody"])
+    }
+
     func testFindingsSurfaceFromTheBuild() async {
         let (sut, builder, _) = makeSUT()
         builder.stub(voiceNames: ["lhDown"],

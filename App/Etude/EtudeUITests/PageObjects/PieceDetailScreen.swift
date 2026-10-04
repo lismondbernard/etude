@@ -9,6 +9,8 @@ struct PieceDetailScreen {
     var playButton: XCUIElement { app.buttons["detail.button.play"] }
     var exportButton: XCUIElement { app.buttons["detail.button.export"] }
     var diagnosticsLink: XCUIElement { app.buttons["detail.link.diagnostics"] }
+    var retryButton: XCUIElement { app.buttons["detail.button.retry"] }
+    var errorLabel: XCUIElement { app.staticTexts["detail.error"] }
 
     /// The screen itself, by its identifier: it is there whatever state the
     /// build is in, unlike any one control on it.
@@ -34,6 +36,15 @@ struct PieceDetailScreen {
         XCTAssertTrue(
             playButton.waitForExistence(timeout: timeout) && waitEnabled(playButton, timeout: timeout),
             "the piece should build on its own when it opens")
+    }
+
+    var showsError: Bool {
+        errorLabel.waitForExistence(timeout: 10)
+    }
+
+    func tapTryAgain() {
+        XCTAssertTrue(retryButton.waitForExistence(timeout: 5), "a failed build offers Try again")
+        retryButton.tap()
     }
 
     func tapPlay() {

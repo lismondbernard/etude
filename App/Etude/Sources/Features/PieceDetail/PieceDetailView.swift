@@ -11,8 +11,15 @@ struct PieceDetailView: View {
     init(piece: CorpusPiece) {
         _viewModel = State(initialValue: PieceDetailViewModel(
             piece: piece,
-            builder: EnginePieceBuilder(corpus: BundledCorpus()),
+            builder: EnginePieceBuilder(corpus: Self.makeCorpus()),
             player: Self.makePlayer()))
+    }
+
+    /// UI tests pass `-uiTesting-corpusFailsOnce` to reach the failed state.
+    private static func makeCorpus() -> any CorpusProviding {
+        ProcessInfo.processInfo.arguments.contains("-uiTesting-corpusFailsOnce")
+            ? FailOnceCorpus(wrapping: BundledCorpus())
+            : BundledCorpus()
     }
 
     /// UI tests pass `-uiTesting` to skip audio hardware (PLAN.md §8).
@@ -50,6 +57,10 @@ struct PieceDetailView: View {
                 Label(message, systemImage: "xmark.octagon")
                     .foregroundStyle(.red)
                     .accessibilityIdentifier("detail.error")
+                Button("Try again") {
+                    Task { await buildAndRefresh() }
+                }
+                .accessibilityIdentifier("detail.button.retry")
             case .idle, .built:
                 Button(viewModel.phase == .built ? "Rebuild" : "Build") {
                     Task { await buildAndRefresh() }
