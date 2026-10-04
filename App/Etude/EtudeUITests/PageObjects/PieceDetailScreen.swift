@@ -28,6 +28,14 @@ struct PieceDetailScreen {
             "Play should unlock after the build")
     }
 
+    /// Waits for the build that opening the piece starts, without tapping
+    /// anything: playback unlocking is the signal it finished.
+    func waitForBuild(timeout: TimeInterval = 20) {
+        XCTAssertTrue(
+            playButton.waitForExistence(timeout: timeout) && waitEnabled(playButton, timeout: timeout),
+            "the piece should build on its own when it opens")
+    }
+
     func tapPlay() {
         playButton.tap()
     }

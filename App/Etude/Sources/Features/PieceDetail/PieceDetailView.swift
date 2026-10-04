@@ -1,7 +1,7 @@
 import SwiftUI
 import EtudeKit
 
-/// Piece detail (PLAN.md §8, screen 2): Build → track list → Play/Pause,
+/// Piece detail (PLAN.md §8, screen 2): builds on open → track list → Play/Pause,
 /// tempo slider, Export, and the door to Diagnostics.
 struct PieceDetailView: View {
     @State private var viewModel: PieceDetailViewModel
@@ -35,6 +35,9 @@ struct PieceDetailView: View {
         .navigationTitle(viewModel.piece.title)
         .navigationBarTitleDisplayMode(.inline)
         .accessibilityIdentifier("detail.screen")
+        // Opening a piece builds it (ADR-0007): the build is quick, local
+        // and repeatable, so a tap to start it was a step with no choice in it.
+        .task(id: viewModel.piece.id) { await buildAndRefresh() }
     }
 
     private var buildSection: some View {

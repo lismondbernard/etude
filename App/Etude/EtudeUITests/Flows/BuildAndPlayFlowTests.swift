@@ -1,13 +1,14 @@
 import XCTest
 
-/// The happy path (PLAN.md §8): launch → open the Gymnopédie → Build → wait
-/// for Play to unlock → Play → the export sheet appears. Explicit waits only.
+/// The happy path (PLAN.md §8): launch → open the Gymnopédie → it builds on
+/// its own and Play unlocks → Play → the export sheet appears. Explicit
+/// waits only.
 final class BuildAndPlayFlowTests: XCTestCase {
     override func setUp() {
         continueAfterFailure = false
     }
 
-    func testBuildPlayAndExportTheGymnopedie() {
+    func testOpenPlayAndExportTheGymnopedie() {
         let app = XCUIApplication()
         app.launchArguments = ["-uiTesting"]
         app.launch()
@@ -15,7 +16,7 @@ final class BuildAndPlayFlowTests: XCTestCase {
         let detail = LibraryScreen(app: app).openPiece("gymnopedie-1")
         XCTAssertTrue(detail.isDisplayed)
 
-        detail.buildAndWait()
+        detail.waitForBuild()
         XCTAssertTrue(app.staticTexts["detail.track.melody"].waitForExistence(timeout: 5),
                       "the built tracks should be listed")
 
