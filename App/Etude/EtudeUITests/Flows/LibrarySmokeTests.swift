@@ -64,4 +64,19 @@ final class LibrarySmokeTests: XCTestCase {
 
         XCTAssertTrue(library.showsChoosePrompt, "the empty detail column asks for a piece")
     }
+
+    /// The Credits button lives in the sidebar, so it still works while a
+    /// piece is open beside it.
+    func testWideWindowOpensCreditsWithAPieceOpen() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTesting"]
+        app.launch()
+
+        let library = LibraryScreen(app: app)
+        try XCTSkipUnless(library.isWide, "compact width covers this in the credits test")
+
+        XCTAssertTrue(library.openPiece("gymnopedie-1").isDisplayed, "the piece opens")
+        let credits = library.openCredits()
+        XCTAssertTrue(credits.isDisplayed, "Credits open from the sidebar")
+    }
 }
