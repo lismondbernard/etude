@@ -39,6 +39,11 @@ struct LibraryView: View {
                     PieceDetailView(piece: piece)
                 }
                 .id(piece.id)
+            } else {
+                ContentUnavailableView(
+                    "Choose a piece",
+                    systemImage: "music.note.list",
+                    description: Text("Pick a piece from the library to build it and play it."))
             }
         }
     }

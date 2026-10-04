@@ -51,4 +51,17 @@ final class LibrarySmokeTests: XCTestCase {
         XCTAssertTrue(library.row(for: "minuet-in-g").isHittable,
                       "the library is still on screen beside the piece")
     }
+
+    /// Before a piece is chosen, the wide detail column says what to do
+    /// instead of showing an empty pane.
+    func testWideWindowAsksForAPieceBeforeOneIsChosen() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTesting"]
+        app.launch()
+
+        let library = LibraryScreen(app: app)
+        try XCTSkipUnless(library.isWide, "compact width shows the library alone")
+
+        XCTAssertTrue(library.showsChoosePrompt, "the empty detail column asks for a piece")
+    }
 }

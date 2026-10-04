@@ -17,6 +17,11 @@ struct LibraryScreen {
         app.windows.firstMatch.frame.width >= 600
     }
 
+    /// The prompt in the empty detail column before a piece is chosen.
+    var showsChoosePrompt: Bool {
+        app.staticTexts["Choose a piece"].waitForExistence(timeout: 5)
+    }
+
     func row(for pieceID: String) -> XCUIElement {
         app.buttons["library.row.\(pieceID)"].firstMatch
     }
