@@ -418,8 +418,10 @@ stated in README).
 
 **Screens (MVP):**
 1. **Library** — list of corpus pieces (title, composer, duration, license badge).
-2. **Piece Detail** — Build button → progress → track list with per-track
-   instrument names; Play/Pause (`AVMIDIPlayer`); tempo slider (rebuild MIDI at new
+   In a regular horizontal size class (iPad, a foldable's inner display) it is
+   the sidebar of a split view beside Piece Detail (Phase 8).
+2. **Piece Detail** — opens built (the build runs when the piece appears;
+   ADR-0007) → track list with per-track instrument names; Play/Pause (`AVMIDIPlayer`); tempo slider (rebuild MIDI at new
    BPM or set tempo meta); Export via `ShareLink`/share sheet.
 3. **Diagnostics** — after a build, show the Validator's findings (all green for
    the six; Clair de Lune intentionally shows its alignment failure — the app is
@@ -430,16 +432,16 @@ says a screen earns one — talking to the engine through the `PieceBuilding` se
 (§0.3) so view-model unit tests run against a spy with no real parsing; builds
 run off the main actor; every
 interactive element gets a stable `accessibilityIdentifier`
-(e.g. `library.row.gymnopedie-1`, `detail.button.build`, `detail.slider.tempo`).
+(e.g. `library.row.gymnopedie-1`, `detail.button.play`, `detail.slider.tempo`).
 View-model and player-wrapper unit tests use `makeSUT()` + `trackForMemoryLeaks`
 (§0.6) — the app layer is where reference types (and leaks) live.
 
 **UI-test curriculum (XCUITest):**
 - Page objects (`LibraryScreen`, `PieceDetailScreen`) wrapping queries + waits —
   no raw `app.buttons[...]` in test bodies.
-- Happy path: launch → tap Gymnopédie → Build → wait for Play enabled → Play →
-  export sheet appears.
-- Failure surfacing: open Clair de Lune → Build → Diagnostics shows alignment
+- Happy path: launch → tap Gymnopédie → wait for Play enabled → Play → export
+  sheet appears.
+- Failure surfacing: open Clair de Lune → Diagnostics shows alignment
   findings (testing that errors are *presented*, not just thrown).
 - Launch-argument seams (`-uiTesting`) to skip audio hardware where needed and to
   make builds deterministic/fast in tests.
@@ -574,6 +576,40 @@ is the fuzzing curriculum arriving as a feature.
 **Accept:** LICENSES.md has zero open action items; ADR-0005 exists; the repo
 is public with phase tags and CONTRIBUTING.md; the app is live on the App
 Store with audible playback; issues #3 closed and #4 groomed as the next arc.
+
+### Phase 8: Wide screens, and a piece that opens built (planned)
+
+The first changes to the app's screens since 1.0. Announced before any of it
+lands, in the pinned RFC, issue #7, so the history can be read as it arrives.
+Same §0 discipline: one behavior per commit, test first.
+
+**8.1 The library beside the piece.** Library becomes the sidebar of a
+`NavigationSplitView` and Piece Detail its detail column. The horizontal size
+class decides, never the device idiom or a measured width: a foldable's inner
+display reports itself as a phone. The library shows at launch so no one lands
+on an empty column; once a piece is picked the system decides whether it stays
+beside the piece or steps aside behind Show Sidebar. UI tests read the app's
+size class through a `-uiTesting` probe, and CI runs the app tests on an iPad
+as well as an iPhone so the regular-size-class tests actually run.
+
+**8.2 The piece opens built.** Measured on 2026-10-03 at `044c0a7`: all seven
+pieces build in 6.5 ms in a release build on an Apple Silicon Mac, Clair de
+Lune (the largest, 3,889 tokens) in 2.9 ms. A Build button in front of that
+is a gate with nothing behind it. The detail runs the build when the piece
+appears; Build and Rebuild go away; the failed state gains Try again; the tempo
+slider stays the only rebuild. The `PieceBuilding` seam, the view model's
+phases and their unit tests do not change; the UI flows wait on Play enabled
+instead of tapping Build. Recorded as **ADR-0007**.
+
+**8.3 Two defects on the same screen (if they fit).** Play returns to "Play"
+when the piece finishes, and a tempo change keeps the tracks on screen while
+the piece rebuilds.
+
+**Accept:** on iPad and on every posture of the iPhone Duo simulator the
+library is reachable beside or one tap from the open piece, and a phone is
+unchanged; opening any piece shows its tracks and Play with no tap in between;
+a failed build can be retried; ADR-0007 exists; CI is green on both devices;
+issue #7 closed with links to the commits; ship **1.1.0**, tagged.
 
 ---
 
