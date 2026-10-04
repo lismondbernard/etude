@@ -49,7 +49,8 @@ final class LibrarySmokeTests: XCTestCase {
 
         let detail = library.openPiece("gymnopedie-1")
         XCTAssertTrue(detail.isDisplayed, "the piece opens")
-        XCTAssertTrue(detail.buildButton.isHittable, "the piece is not covered by the library")
+        detail.waitForBuild()
+        XCTAssertTrue(detail.playButton.isHittable, "the piece is not covered by the library")
         library.revealIfHidden()
         XCTAssertTrue(library.row(for: "minuet-in-g").isHittable,
                       "the library is beside the piece or one tap away")

@@ -50,7 +50,7 @@ struct PieceDetailView: View {
     private var buildSection: some View {
         Section {
             switch viewModel.phase {
-            case .building:
+            case .idle, .building:
                 ProgressView("Building…")
                     .accessibilityIdentifier("detail.progress.build")
             case .failed(let message):
@@ -61,11 +61,8 @@ struct PieceDetailView: View {
                     Task { await buildAndRefresh() }
                 }
                 .accessibilityIdentifier("detail.button.retry")
-            case .idle, .built:
-                Button(viewModel.phase == .built ? "Rebuild" : "Build") {
-                    Task { await buildAndRefresh() }
-                }
-                .accessibilityIdentifier("detail.button.build")
+            case .built:
+                EmptyView()
             }
         } footer: {
             if let issue = viewModel.piece.knownIssue {

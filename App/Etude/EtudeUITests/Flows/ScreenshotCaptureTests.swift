@@ -35,7 +35,7 @@ final class ScreenshotCaptureTests: XCTestCase {
         app.navigationBars.buttons.firstMatch.tap()
 
         let detail = LibraryScreen(app: app).openPiece("clair-de-lune")
-        detail.buildAndWait()
+        detail.waitForBuild()
         detail.tapPlay()
         XCTAssertTrue(detail.showsPause)
         snap("01-build-and-play")

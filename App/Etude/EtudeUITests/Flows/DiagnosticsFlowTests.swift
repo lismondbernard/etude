@@ -17,7 +17,7 @@ final class DiagnosticsFlowTests: XCTestCase {
         app.launch()
 
         let detail = LibraryScreen(app: app).openPiece("clair-de-lune")
-        detail.buildAndWait()
+        detail.waitForBuild()
 
         let diagnostics = detail.openDiagnostics()
         XCTAssertTrue(diagnostics.isDisplayed)
@@ -31,7 +31,7 @@ final class DiagnosticsFlowTests: XCTestCase {
         app.launch()
 
         let detail = LibraryScreen(app: app).openPiece("minuet-in-g")
-        detail.buildAndWait()
+        detail.waitForBuild()
 
         let diagnostics = detail.openDiagnostics()
         XCTAssertTrue(diagnostics.isDisplayed)

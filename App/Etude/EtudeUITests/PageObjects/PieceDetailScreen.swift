@@ -1,11 +1,11 @@
 import XCTest
 
-/// Page Object for the Piece Detail screen: build, playback, tempo, export,
-/// diagnostics — wrapped queries and explicit waits, no sleeps.
+/// Page Object for the Piece Detail screen: the build that opening starts,
+/// playback, tempo, export, diagnostics — wrapped queries and explicit
+/// waits, no sleeps.
 struct PieceDetailScreen {
     let app: XCUIApplication
 
-    var buildButton: XCUIElement { app.buttons["detail.button.build"] }
     var playButton: XCUIElement { app.buttons["detail.button.play"] }
     var exportButton: XCUIElement { app.buttons["detail.button.export"] }
     var diagnosticsLink: XCUIElement { app.buttons["detail.link.diagnostics"] }
@@ -18,16 +18,6 @@ struct PieceDetailScreen {
 
     var isDisplayed: Bool {
         screen.waitForExistence(timeout: 5)
-    }
-
-    /// Taps Build and waits until playback unlocks — the signal the build
-    /// finished and the player is loaded.
-    func buildAndWait(timeout: TimeInterval = 20) {
-        XCTAssertTrue(buildButton.waitForExistence(timeout: 5), "Build button should exist")
-        buildButton.tap()
-        XCTAssertTrue(
-            playButton.waitForExistence(timeout: timeout) && waitEnabled(playButton, timeout: timeout),
-            "Play should unlock after the build")
     }
 
     /// Waits for the build that opening the piece starts, without tapping
