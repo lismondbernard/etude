@@ -37,6 +37,9 @@ final class PieceDetailViewModel {
     var tracks: [Voice] { builtPiece?.score.voices ?? [] }
     var findings: [ValidationFinding] { builtPiece?.findings ?? [] }
     var canPlay: Bool { phase == .built }
+    /// The sections stay up through a tempo rebuild: `build()` keeps the old
+    /// piece until the new one lands, so the slider just released stays put.
+    var showsPiece: Bool { builtPiece != nil }
     var tempoBeatsPerMinute: Int {
         tempoOverride ?? builtPiece?.score.tempo?.beatsPerMinute ?? 120
     }

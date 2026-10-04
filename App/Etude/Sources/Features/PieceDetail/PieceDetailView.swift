@@ -33,7 +33,7 @@ struct PieceDetailView: View {
     var body: some View {
         List {
             buildSection
-            if viewModel.phase == .built {
+            if viewModel.showsPiece {
                 tracksSection
                 playbackSection
                 diagnosticsSection

@@ -85,6 +85,24 @@ final class PieceDetailViewModelTests: XCTestCase {
         XCTAssertEqual(sut.tempoBeatsPerMinute, 100)
     }
 
+    func testApplyingATempoKeepsTheTracksUntilTheRebuildLands() async {
+        let (sut, builder, _) = makeSUT()
+        builder.stub(voiceNames: ["melody"])
+        await sut.build()
+        builder.suspendsBuilds = true
+
+        let rebuild = Task { await sut.applyTempo(100) }
+        await builder.waitUntilSuspended()
+
+        XCTAssertEqual(sut.phase, .building)
+        XCTAssertTrue(sut.showsPiece, "the slider the user just released must not vanish")
+        XCTAssertEqual(sut.tracks.map(\.name), ["melody"])
+
+        builder.resumeBuild()
+        await rebuild.value
+        XCTAssertEqual(sut.phase, .built)
+    }
+
     func testExportWritesTheBuiltMIDI() async throws {
         let (sut, builder, _) = makeSUT()
         builder.stub(voiceNames: ["melody"])
@@ -121,6 +139,10 @@ final class PieceDetailViewModelTests: XCTestCase {
         var stubbedMIDI: [UInt8] = [0x4D, 0x54, 0x68, 0x64]
         private var stubbedScore = Score(title: "Tiny", tempo: nil, meter: nil, voices: [])
         private var stubbedFindings: [ValidationFinding] = []
+        /// Set to hold each build at its await until `resumeBuild()`, so a
+        /// test can look at the screen while a rebuild is in flight.
+        var suspendsBuilds = false
+        private var suspendedBuild: CheckedContinuation<Void, Never>?
 
         func stub(voiceNames: [String], findings: [ValidationFinding] = []) {
             stubbedScore = Score(
@@ -133,6 +155,9 @@ final class PieceDetailViewModelTests: XCTestCase {
 
         func build(_ piece: CorpusPiece, tempoBeatsPerMinute: Int?) async throws -> BuiltPiece {
             requests.append((piece, tempoBeatsPerMinute))
+            if suspendsBuilds {
+                await withCheckedContinuation { suspendedBuild = $0 }
+            }
             if let stubbedError { throw stubbedError }
             var score = stubbedScore
             if let tempoBeatsPerMinute {
@@ -142,6 +167,15 @@ final class PieceDetailViewModelTests: XCTestCase {
                               meter: score.meter, voices: score.voices)
             }
             return BuiltPiece(score: score, midi: stubbedMIDI, findings: stubbedFindings)
+        }
+
+        func waitUntilSuspended() async {
+            while suspendedBuild == nil { await Task.yield() }
+        }
+
+        func resumeBuild() {
+            suspendedBuild?.resume()
+            suspendedBuild = nil
         }
     }
 
