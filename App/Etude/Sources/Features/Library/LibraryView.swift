@@ -10,9 +10,15 @@ import EtudeKit
 /// as a phone.
 struct LibraryView: View {
     @State private var selection: String?
+    /// The library shows until a piece is chosen, then the system decides.
+    /// Left to itself, a wide but tall window (a foldable's inner display
+    /// held upright) hides the sidebar and opens on an empty column. Forced
+    /// to stay, the sidebar covers the open piece where the two columns
+    /// don't fit side by side. So: all columns at launch, automatic after.
+    @State private var columns: NavigationSplitViewVisibility = .all
 
     var body: some View {
-        NavigationSplitView {
+        NavigationSplitView(columnVisibility: $columns) {
             List(CorpusPiece.all, selection: $selection) { piece in
                 NavigationLink(value: piece.id) {
                     row(for: piece)
@@ -45,6 +51,10 @@ struct LibraryView: View {
                     systemImage: "music.note.list",
                     description: Text("Pick a piece from the library to build it and play it."))
             }
+        }
+        .navigationSplitViewStyle(.balanced)
+        .onChange(of: selection) { _, chosen in
+            columns = chosen == nil ? .all : .automatic
         }
     }
 

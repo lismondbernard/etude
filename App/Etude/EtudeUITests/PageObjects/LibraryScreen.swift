@@ -22,6 +22,20 @@ struct LibraryScreen {
         app.staticTexts["Choose a piece"].waitForExistence(timeout: 5)
     }
 
+    /// Where the two columns don't fit side by side, the system hides the
+    /// library once a piece is open and offers this button to bring it back.
+    var showSidebarButton: XCUIElement {
+        app.buttons["Show Sidebar"].firstMatch
+    }
+
+    /// Brings the library back if the system tucked it away; does nothing
+    /// where it is already on screen.
+    func revealIfHidden() {
+        if showSidebarButton.exists && showSidebarButton.isHittable {
+            showSidebarButton.tap()
+        }
+    }
+
     func row(for pieceID: String) -> XCUIElement {
         app.buttons["library.row.\(pieceID)"].firstMatch
     }

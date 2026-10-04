@@ -34,11 +34,12 @@ final class LibrarySmokeTests: XCTestCase {
                       "the bundled CC0 piano SoundFont is credited (issue #3)")
     }
 
-    /// At regular width (iPad, the inner display of a foldable) the library
-    /// stays beside the open piece instead of being pushed off screen. Decided
-    /// by the window's width, never by the device idiom: a foldable reports
-    /// itself as a phone.
-    func testWideWindowKeepsTheLibraryBesideTheOpenPiece() throws {
+    /// At regular width (iPad, the inner display of a foldable) opening a
+    /// piece shows it uncovered, and the library stays within reach: beside
+    /// the piece where both columns fit, one tap away where they don't.
+    /// Decided by the window's width, never by the device idiom: a foldable
+    /// reports itself as a phone.
+    func testWideWindowOpensAPieceWithTheLibraryWithinReach() throws {
         let app = XCUIApplication()
         app.launchArguments = ["-uiTesting"]
         app.launch()
@@ -48,8 +49,10 @@ final class LibrarySmokeTests: XCTestCase {
 
         let detail = library.openPiece("gymnopedie-1")
         XCTAssertTrue(detail.isDisplayed, "the piece opens")
+        XCTAssertTrue(detail.buildButton.isHittable, "the piece is not covered by the library")
+        library.revealIfHidden()
         XCTAssertTrue(library.row(for: "minuet-in-g").isHittable,
-                      "the library is still on screen beside the piece")
+                      "the library is beside the piece or one tap away")
     }
 
     /// Before a piece is chosen, the wide detail column says what to do
@@ -65,6 +68,23 @@ final class LibrarySmokeTests: XCTestCase {
         XCTAssertTrue(library.showsChoosePrompt, "the empty detail column asks for a piece")
     }
 
+    /// A tall wide window (iPad held upright, a foldable's inner display)
+    /// still shows the library at launch. A split view's default hides the
+    /// sidebar in portrait, which would land the user on an empty column.
+    func testTallWideWindowShowsTheLibraryAtLaunch() throws {
+        XCUIDevice.shared.orientation = .portrait
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTesting"]
+        app.launch()
+
+        let library = LibraryScreen(app: app)
+        try XCTSkipUnless(library.isWide, "compact width shows the library alone")
+
+        XCTAssertTrue(library.showsRow(for: "gymnopedie-1"), "the row exists")
+        XCTAssertTrue(library.row(for: "gymnopedie-1").isHittable,
+                      "the library is on screen, not hidden behind the sidebar button")
+    }
+
     /// The Credits button lives in the sidebar, so it still works while a
     /// piece is open beside it.
     func testWideWindowOpensCreditsWithAPieceOpen() throws {
@@ -76,6 +96,7 @@ final class LibrarySmokeTests: XCTestCase {
         try XCTSkipUnless(library.isWide, "compact width covers this in the credits test")
 
         XCTAssertTrue(library.openPiece("gymnopedie-1").isDisplayed, "the piece opens")
+        library.revealIfHidden()
         let credits = library.openCredits()
         XCTAssertTrue(credits.isDisplayed, "Credits open from the sidebar")
     }
