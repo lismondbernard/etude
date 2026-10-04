@@ -34,10 +34,10 @@ final class LibrarySmokeTests: XCTestCase {
                       "the bundled CC0 piano SoundFont is credited (issue #3)")
     }
 
-    /// At regular width (iPad, the inner display of a foldable) opening a
+    /// In a regular size class (iPad, the inner display of a foldable) opening a
     /// piece shows it uncovered, and the library stays within reach: beside
     /// the piece where both columns fit, one tap away where they don't.
-    /// Decided by the window's width, never by the device idiom: a foldable
+    /// Decided by the size class, never by the device idiom: a foldable
     /// reports itself as a phone.
     func testWideWindowOpensAPieceWithTheLibraryWithinReach() throws {
         let app = XCUIApplication()
@@ -45,7 +45,7 @@ final class LibrarySmokeTests: XCTestCase {
         app.launch()
 
         let library = LibraryScreen(app: app)
-        try XCTSkipUnless(library.isWide, "compact width collapses to a stack by design")
+        try XCTSkipUnless(library.isWide, "a compact size class collapses to a stack by design")
 
         let detail = library.openPiece("gymnopedie-1")
         XCTAssertTrue(detail.isDisplayed, "the piece opens")
@@ -63,7 +63,7 @@ final class LibrarySmokeTests: XCTestCase {
         app.launch()
 
         let library = LibraryScreen(app: app)
-        try XCTSkipUnless(library.isWide, "compact width shows the library alone")
+        try XCTSkipUnless(library.isWide, "a compact size class shows the library alone")
 
         XCTAssertTrue(library.showsChoosePrompt, "the empty detail column asks for a piece")
     }
@@ -78,7 +78,7 @@ final class LibrarySmokeTests: XCTestCase {
         app.launch()
 
         let library = LibraryScreen(app: app)
-        try XCTSkipUnless(library.isWide, "compact width shows the library alone")
+        try XCTSkipUnless(library.isWide, "a compact size class shows the library alone")
 
         XCTAssertTrue(library.showsRow(for: "gymnopedie-1"), "the row exists")
         XCTAssertTrue(library.row(for: "gymnopedie-1").isHittable,
@@ -93,7 +93,7 @@ final class LibrarySmokeTests: XCTestCase {
         app.launch()
 
         let library = LibraryScreen(app: app)
-        try XCTSkipUnless(library.isWide, "compact width covers this in the credits test")
+        try XCTSkipUnless(library.isWide, "a compact size class covers this in the credits test")
 
         XCTAssertTrue(library.openPiece("gymnopedie-1").isDisplayed, "the piece opens")
         library.revealIfHidden()

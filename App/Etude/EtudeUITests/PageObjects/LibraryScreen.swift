@@ -10,11 +10,13 @@ struct LibraryScreen {
         app.navigationBars["Étude"].waitForExistence(timeout: 5)
     }
 
-    /// Regular width (iPad, a foldable's inner display) keeps the library
-    /// beside the open piece; compact width shows one screen at a time.
-    /// Measured from the window, never the device idiom.
+    /// A regular horizontal size class (iPad, a foldable's inner display)
+    /// puts the library in a split view; compact shows one screen at a time.
+    /// Read from the app's own size class, never the device idiom or the
+    /// window's width.
     var isWide: Bool {
-        app.windows.firstMatch.frame.width >= 600
+        let probe = app.staticTexts["debug.horizontalSizeClass"].firstMatch
+        return probe.waitForExistence(timeout: 5) && probe.label == "regular"
     }
 
     /// The prompt in the empty detail column before a piece is chosen.

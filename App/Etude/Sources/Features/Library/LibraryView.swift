@@ -4,12 +4,13 @@ import EtudeKit
 /// The corpus browser (PLAN.md §8, screen 1): a plain view over the engine's
 /// catalog — no view model, per §0.9, until the corpus becomes dynamic.
 ///
-/// A split view: at regular width the library stays beside the open piece;
-/// at compact width it collapses to the same stack as before. Width decides,
-/// never the device idiom, because a foldable's inner display reports itself
-/// as a phone.
+/// A split view: in a regular horizontal size class the library sits beside
+/// the open piece; in a compact one it collapses to the same stack as before.
+/// The size class decides, never the device idiom, because a foldable's inner
+/// display reports itself as a phone.
 struct LibraryView: View {
     @State private var selection: String?
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     /// The library shows until a piece is chosen, then the system decides.
     /// Left to itself, a wide but tall window (a foldable's inner display
     /// held upright) hides the sidebar and opens on an empty column. Forced
@@ -55,6 +56,20 @@ struct LibraryView: View {
         .navigationSplitViewStyle(.balanced)
         .onChange(of: selection) { _, chosen in
             columns = chosen == nil ? .all : .automatic
+        }
+        .overlay(alignment: .bottomTrailing) { sizeClassProbe }
+    }
+
+    /// UI tests (`-uiTesting`) read the horizontal size class from this
+    /// invisible label, so they decide "wide" the way the layout does, by
+    /// size class, rather than by measuring the window.
+    @ViewBuilder private var sizeClassProbe: some View {
+        if ProcessInfo.processInfo.arguments.contains("-uiTesting") {
+            Text(horizontalSizeClass == .regular ? "regular" : "compact")
+                .font(.system(size: 1))
+                .opacity(0.01)
+                .accessibilityIdentifier("debug.horizontalSizeClass")
+                .allowsHitTesting(false)
         }
     }
 
