@@ -13,7 +13,7 @@ final class DiagnosticsPresenterTests: XCTestCase {
             .registerViolation(voice: "lhDown", pitch: 3),
         ]
         XCTAssertEqual(DiagnosticsPresenter.summary(for: findings),
-                       "2 findings — this piece ships honest.")
+                       "2 findings. This piece ships honest.")
     }
 
     func testRegisterLineSpeaksTheMusiciansLanguage() {

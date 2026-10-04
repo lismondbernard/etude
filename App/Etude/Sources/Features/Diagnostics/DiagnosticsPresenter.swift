@@ -7,7 +7,7 @@ enum DiagnosticsPresenter {
     static func summary(for findings: [ValidationFinding]) -> String {
         findings.isEmpty
             ? "All invariants hold."
-            : "\(findings.count) finding\(findings.count == 1 ? "" : "s") — this piece ships honest."
+            : "\(findings.count) finding\(findings.count == 1 ? "" : "s"). This piece ships honest."
     }
 
     static func line(for finding: ValidationFinding) -> String {
