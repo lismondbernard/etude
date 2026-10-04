@@ -11,6 +11,7 @@ struct PieceDetailScreen {
     var diagnosticsLink: XCUIElement { app.buttons["detail.link.diagnostics"] }
     var retryButton: XCUIElement { app.buttons["detail.button.retry"] }
     var errorLabel: XCUIElement { app.staticTexts["detail.error"] }
+    var builtFromLine: XCUIElement { app.staticTexts["detail.text.builtFrom"] }
 
     /// The screen itself, by its identifier: it is there whatever state the
     /// build is in, unlike any one control on it.

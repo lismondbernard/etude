@@ -65,8 +65,15 @@ struct PieceDetailView: View {
                 EmptyView()
             }
         } footer: {
-            if let issue = viewModel.piece.knownIssue {
-                Text("Ships with a recorded issue: \(issue)")
+            VStack(alignment: .leading, spacing: 4) {
+                // The store says the app builds on device; the screen shows it.
+                if viewModel.phase == .built {
+                    Text("Built on this device from \(viewModel.piece.id).ly")
+                        .accessibilityIdentifier("detail.text.builtFrom")
+                }
+                if let issue = viewModel.piece.knownIssue {
+                    Text("Ships with a recorded issue: \(issue)")
+                }
             }
         }
     }

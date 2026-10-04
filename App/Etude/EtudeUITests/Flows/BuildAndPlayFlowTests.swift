@@ -19,6 +19,8 @@ final class BuildAndPlayFlowTests: XCTestCase {
         detail.waitForBuild()
         XCTAssertTrue(app.staticTexts["detail.track.melody"].waitForExistence(timeout: 5),
                       "the built tracks should be listed")
+        XCTAssertEqual(detail.builtFromLine.label, "Built on this device from gymnopedie-1.ly",
+                       "the piece says where its MIDI came from")
 
         detail.tapPlay()
         XCTAssertTrue(detail.showsPause, "playing should flip the control to Pause")
