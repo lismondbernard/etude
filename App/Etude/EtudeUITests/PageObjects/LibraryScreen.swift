@@ -10,6 +10,13 @@ struct LibraryScreen {
         app.navigationBars["Étude"].waitForExistence(timeout: 5)
     }
 
+    /// Regular width (iPad, a foldable's inner display) keeps the library
+    /// beside the open piece; compact width shows one screen at a time.
+    /// Measured from the window, never the device idiom.
+    var isWide: Bool {
+        app.windows.firstMatch.frame.width >= 600
+    }
+
     func row(for pieceID: String) -> XCUIElement {
         app.buttons["library.row.\(pieceID)"].firstMatch
     }

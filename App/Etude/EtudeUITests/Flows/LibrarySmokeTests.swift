@@ -43,10 +43,9 @@ final class LibrarySmokeTests: XCTestCase {
         app.launchArguments = ["-uiTesting"]
         app.launch()
 
-        let windowWidth = app.windows.firstMatch.frame.width
-        try XCTSkipIf(windowWidth < 600, "compact width collapses to a stack by design")
-
         let library = LibraryScreen(app: app)
+        try XCTSkipUnless(library.isWide, "compact width collapses to a stack by design")
+
         let detail = library.openPiece("gymnopedie-1")
         XCTAssertTrue(detail.isDisplayed, "the piece opens")
         XCTAssertTrue(library.row(for: "minuet-in-g").isHittable,
