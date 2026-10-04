@@ -3,19 +3,21 @@ import EtudeKit
 
 /// The corpus browser (PLAN.md §8, screen 1): a plain view over the engine's
 /// catalog — no view model, per §0.9, until the corpus becomes dynamic.
+///
+/// A split view: at regular width the library stays beside the open piece;
+/// at compact width it collapses to the same stack as before. Width decides,
+/// never the device idiom, because a foldable's inner display reports itself
+/// as a phone.
 struct LibraryView: View {
+    @State private var selection: String?
+
     var body: some View {
-        NavigationStack {
-            List(CorpusPiece.all) { piece in
+        NavigationSplitView {
+            List(CorpusPiece.all, selection: $selection) { piece in
                 NavigationLink(value: piece.id) {
                     row(for: piece)
                 }
                 .accessibilityIdentifier("library.row.\(piece.id)")
-            }
-            .navigationDestination(for: String.self) { id in
-                if let piece = CorpusPiece.all.first(where: { $0.id == id }) {
-                    PieceDetailView(piece: piece)
-                }
             }
             .navigationTitle("Étude")
             .accessibilityIdentifier("library.screen")
@@ -26,6 +28,17 @@ struct LibraryView: View {
                     Label("Credits", systemImage: "info.circle")
                 }
                 .accessibilityIdentifier("library.button.credits")
+            }
+        } detail: {
+            // The detail keeps its own stack so Diagnostics pushes inside
+            // the column. `.id` gives each piece a fresh view model: the
+            // detail holds its build and playback state, and switching
+            // pieces must not carry the last one's over.
+            if let piece = CorpusPiece.all.first(where: { $0.id == selection }) {
+                NavigationStack {
+                    PieceDetailView(piece: piece)
+                }
+                .id(piece.id)
             }
         }
     }

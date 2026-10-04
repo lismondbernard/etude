@@ -33,4 +33,23 @@ final class LibrarySmokeTests: XCTestCase {
         XCTAssertTrue(credits.showsSoundBankCredit,
                       "the bundled CC0 piano SoundFont is credited (issue #3)")
     }
+
+    /// At regular width (iPad, the inner display of a foldable) the library
+    /// stays beside the open piece instead of being pushed off screen. Decided
+    /// by the window's width, never by the device idiom: a foldable reports
+    /// itself as a phone.
+    func testWideWindowKeepsTheLibraryBesideTheOpenPiece() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTesting"]
+        app.launch()
+
+        let windowWidth = app.windows.firstMatch.frame.width
+        try XCTSkipIf(windowWidth < 600, "compact width collapses to a stack by design")
+
+        let library = LibraryScreen(app: app)
+        let detail = library.openPiece("gymnopedie-1")
+        XCTAssertTrue(detail.isDisplayed, "the piece opens")
+        XCTAssertTrue(library.row(for: "minuet-in-g").isHittable,
+                      "the library is still on screen beside the piece")
+    }
 }
