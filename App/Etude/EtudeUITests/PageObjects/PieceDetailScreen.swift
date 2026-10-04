@@ -10,8 +10,12 @@ struct PieceDetailScreen {
     var exportButton: XCUIElement { app.buttons["detail.button.export"] }
     var diagnosticsLink: XCUIElement { app.buttons["detail.link.diagnostics"] }
 
+    /// The screen itself, by its identifier: it is there whatever state the
+    /// build is in, unlike any one control on it.
+    var screen: XCUIElement { app.descendants(matching: .any)["detail.screen"].firstMatch }
+
     var isDisplayed: Bool {
-        buildButton.waitForExistence(timeout: 5)
+        screen.waitForExistence(timeout: 5)
     }
 
     /// Taps Build and waits until playback unlocks — the signal the build
