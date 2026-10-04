@@ -32,8 +32,9 @@ These come from PLAN.md §0 and are checked in review:
 ## Where your tests go — the taxonomy
 
 `EtudeKit` tests use [Swift Testing](https://developer.apple.com/documentation/testing)
-(`import Testing`, `@Test`, `#expect`, `#require`) and are tagged for suite slicing
-(`swift test --filter-tag <tag>`):
+(`import Testing`, `@Test`, `#expect`, `#require`) and are tagged by lesson. Xcode's
+test plans can filter on the tags; from the command line, SwiftPM filters by name
+(`swift test --filter BUG0` runs the regression suites):
 
 | Folder | Tag | What it proves |
 |---|---|---|
