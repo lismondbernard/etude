@@ -32,6 +32,9 @@ final class PieceDetailViewModel {
         self.piece = piece
         self.builder = builder
         self.player = player
+        // The player can stop on its own at the last note; without this the
+        // button would read Pause over a silent piece.
+        player.onFinish = { [weak self] in self?.isPlaying = false }
     }
 
     var tracks: [Voice] { builtPiece?.score.voices ?? [] }

@@ -68,6 +68,17 @@ final class PieceDetailViewModelTests: XCTestCase {
         XCTAssertFalse(player.isPlaying)
     }
 
+    func testThePlayButtonReturnsWhenThePieceFinishes() async {
+        let (sut, builder, player) = makeSUT()
+        builder.stub(voiceNames: ["melody"])
+        await sut.build()
+        sut.togglePlayback()
+
+        player.finish()
+
+        XCTAssertFalse(sut.isPlaying, "after the last note the button reads Play again")
+    }
+
     func testPlaybackNeedsABuild() {
         let (sut, _, player) = makeSUT()
         sut.togglePlayback()
@@ -183,9 +194,16 @@ final class PieceDetailViewModelTests: XCTestCase {
     private final class PlayerSpy: MIDIPlaying {
         private(set) var isPlaying = false
         private(set) var loadedData: Data?
+        var onFinish: (@MainActor () -> Void)?
 
         func load(_ midi: Data) throws { loadedData = midi }
         func play() { isPlaying = true }
         func pause() { isPlaying = false }
+
+        /// The piece plays through to its last note.
+        func finish() {
+            isPlaying = false
+            onFinish?()
+        }
     }
 }

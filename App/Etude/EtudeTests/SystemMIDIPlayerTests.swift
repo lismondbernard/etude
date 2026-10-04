@@ -41,6 +41,36 @@ final class SystemMIDIPlayerTests: XCTestCase {
         XCTAssertFalse(sut.isPlaying, "loading must not start playback")
     }
 
+    func testReportsTheEndOfThePieceOnTheMainActor() throws {
+        let bank = try XCTUnwrap(SoundBank.bundledPiano)
+        let sut = makeSUT(soundBankURL: bank)
+        try sut.load(shortMIDI())
+        let finished = expectation(description: "onFinish after the last note")
+        sut.onFinish = {
+            MainActor.assertIsolated()
+            finished.fulfill()
+        }
+
+        sut.play()
+
+        wait(for: [finished], timeout: 5)
+        XCTAssertFalse(sut.isPlaying)
+    }
+
+    func testPausingIsNotFinishing() throws {
+        let bank = try XCTUnwrap(SoundBank.bundledPiano)
+        let sut = makeSUT(soundBankURL: bank)
+        try sut.load(shortMIDI())
+        let finished = expectation(description: "no onFinish after a pause")
+        finished.isInverted = true
+        sut.onFinish = { finished.fulfill() }
+
+        sut.play()
+        sut.pause()
+
+        wait(for: [finished], timeout: 1)
+    }
+
     // MARK: - Helpers
 
     private func makeSUT(

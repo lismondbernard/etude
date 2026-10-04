@@ -6,6 +6,8 @@ import Foundation
 @MainActor
 protocol MIDIPlaying: AnyObject {
     var isPlaying: Bool { get }
+    /// Called when the piece plays through to its end, never on `pause()`.
+    var onFinish: (@MainActor () -> Void)? { get set }
     func load(_ midi: Data) throws
     func play()
     func pause()
@@ -21,6 +23,10 @@ protocol MIDIPlaying: AnyObject {
 final class SystemMIDIPlayer: MIDIPlaying {
     private let soundBankURL: URL?
     private var player: AVMIDIPlayer?
+    /// AVMIDIPlayer runs the completion on `stop()` too, not only at the end:
+    /// counting plays and pauses lets a stale completion be recognized.
+    private var playback = 0
+    var onFinish: (@MainActor () -> Void)?
 
     init(soundBankURL: URL?) {
         self.soundBankURL = soundBankURL
@@ -40,8 +46,27 @@ final class SystemMIDIPlayer: MIDIPlaying {
         player?.prepareToPlay()
     }
 
-    func play() { player?.play(nil) }
-    func pause() { player?.stop() }
+    func play() {
+        playback += 1
+        let started = playback
+        // AVMIDIPlayer calls back on its own queue, so the closure is
+        // @Sendable and hops to the main actor before touching anything.
+        player?.play { @Sendable [weak self] in
+            Task { @MainActor in self?.didFinish(started) }
+        }
+    }
+
+    func pause() {
+        playback += 1
+        player?.stop()
+    }
+
+    private func didFinish(_ started: Int) {
+        guard started == playback else { return }
+        // At the end of the file a resumed play would play nothing.
+        player?.currentPosition = 0
+        onFinish?()
+    }
 }
 
 /// No audio hardware, no timing: the `-uiTesting` player. It still keeps the
@@ -49,6 +74,7 @@ final class SystemMIDIPlayer: MIDIPlaying {
 @MainActor
 final class SilentMIDIPlayer: MIDIPlaying {
     private(set) var isPlaying = false
+    var onFinish: (@MainActor () -> Void)?
     func load(_ midi: Data) throws {}
     func play() { isPlaying = true }
     func pause() { isPlaying = false }
