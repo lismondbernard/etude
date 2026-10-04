@@ -82,7 +82,7 @@ struct PieceDetailView: View {
         Section("Tracks") {
             ForEach(viewModel.tracks, id: \.name) { track in
                 HStack {
-                    Text(track.name)
+                    Text(TrackPresenter.name(for: track.name))
                     Spacer()
                     Text("\(track.events.count) notes")
                         .foregroundStyle(.secondary)
