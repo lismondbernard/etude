@@ -24,9 +24,17 @@ jobs:
   # job runs on macos-26. The image's default Xcode (26.6) ships with NO simulator
   # runtimes, so we pin the newest Xcode that bundles one (26.5) and let xcodebuild
   # resolve the OS version rather than pinning one the runner may not have.
+  #
+  # Two devices: the iPhone covers the compact size class, the iPad the regular
+  # one. The library's split-view tests only run in a regular size class (they
+  # skip on a phone by design), so without the iPad they would never run here.
   app:
-    name: Etude app + UI tests (xcodebuild)
+    name: Etude app + UI tests (${{ matrix.device }})
     runs-on: macos-26
+    strategy:
+      fail-fast: false
+      matrix:
+        device: ['iPhone 17 Pro', 'iPad Pro 11-inch (M5)']
     steps:
       - uses: actions/checkout@v4
       - name: Select Xcode with a bundled simulator runtime
@@ -43,5 +51,5 @@ jobs:
         run: |
           xcodebuild test \
             -scheme Etude \
-            -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
+            -destination "platform=iOS Simulator,name=${{ matrix.device }}" \
             CODE_SIGNING_ALLOWED=NO
