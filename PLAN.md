@@ -577,7 +577,7 @@ is the fuzzing curriculum arriving as a feature.
 is public with phase tags and CONTRIBUTING.md; the app is live on the App
 Store with audible playback; issues #3 closed and #4 groomed as the next arc.
 
-### Phase 8: Wide screens, and a piece that opens built (planned)
+### Phase 8: Wide screens, and a piece that opens built (done)
 
 The first changes to the app's screens since 1.0. Announced before any of it
 lands, in the pinned RFC, issue #7, so the history can be read as it arrives.
@@ -591,6 +591,8 @@ on an empty column; once a piece is picked the system decides whether it stays
 beside the piece or steps aside behind Show Sidebar. UI tests read the app's
 size class through a `-uiTesting` probe, and CI runs the app tests on an iPad
 as well as an iPhone so the regular-size-class tests actually run.
+*(Done in `71a0928` … `d7e5ca6`. A first try measured the window's width;
+`facf1b8` replaced it with the size-class probe.)*
 
 **8.2 The piece opens built.** Measured on 2026-10-03 at `044c0a7`: all seven
 pieces build in 6.5 ms in a release build on an Apple Silicon Mac, Clair de
@@ -600,16 +602,30 @@ appears; Build and Rebuild go away; the failed state gains Try again; the tempo
 slider stays the only rebuild. The `PieceBuilding` seam, the view model's
 phases and their unit tests do not change; the UI flows wait on Play enabled
 instead of tapping Build. Recorded as **ADR-0007**.
+*(Done in `dc7b71f` … `41740cb`, plus one line the plan did not have: the
+detail says "Built on this device from <file>.ly", so the store's
+"builds on device" claim stays visible with the button gone. One prediction
+was wrong: the view model's unit tests gained a retry test. A second
+launch-argument seam, `-uiTesting-corpusFailsOnce`, gave the failed state its
+first UI test.)*
 
 **8.3 Two defects on the same screen (if they fit).** Play returns to "Play"
 when the piece finishes, and a tempo change keeps the tracks on screen while
 the piece rebuilds.
+*(Done in `c1a29fc` and `5f89474`, with a third change on the same screen:
+`e3b26ee` names tracks for the musician, "Right hand, upper" rather than
+`rhUp`. Finding: `AVMIDIPlayer` runs its completion on `stop()` as well as at
+the end, so pause would have looked like finishing; `SystemMIDIPlayerTests`
+pins both cases. A tempo change still stops playback.)*
 
 **Accept:** on iPad and on every posture of the iPhone Duo simulator the
 library is reachable beside or one tap from the open piece, and a phone is
 unchanged; opening any piece shows its tracks and Play with no tap in between;
 a failed build can be retried; ADR-0007 exists; CI is green on both devices;
 issue #7 closed with links to the commits; ship **1.1.0**, tagged.
+*(Met on iPad, the iPhone Duo's postures, a physical iPad Pro and CI. The
+1.1.0 bump is the next commit; the tag and the close of issue #7 follow the
+App Store release.)*
 
 ---
 

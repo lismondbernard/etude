@@ -23,6 +23,7 @@ end — recorded, not repaired.
 | Phase 5 — App MVP | 2026-08-26 | Catalog, seams, view models against spies, page-object UI flows; a UI test catches a real bug | `255bcd1` … `d9ea28c` |
 | Phase 6 — polish + capstone | 2026-08-26 | The writer swap (§0.5), credits screen, icon, course map, this file, v0.1.0 | `92285d0` … tag `v0.1.0` |
 | Post-release — issues #1–#2 | 2026-08-26 | Clair de Lune's register drift closed: the recovered Mutopia original exposed a mis-"corrected" anchor AND a resolver bug (BUG-007) the prototype shared; the Minuet gained two corrected notes and the Gymnopédie its original ending (voicelet, chord octaves, B1) in the fallout | after `v0.1.0` |
+| Phase 8: wide screens, a piece that opens built | 2026-10-04 | Announced first in RFC issue #7; split view decided by size class; Build button retired, Try again added; Play returns at the end; musician track names; ADR-0007 | `555c311` … `e3b26ee` |
 
 ## Architecture evolution
 
