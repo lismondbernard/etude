@@ -46,6 +46,29 @@ jobs:
       - name: Generate Xcode project
         working-directory: App/Etude
         run: xcodegen generate
+      # The runner sometimes starts before its simulator runtime is mounted,
+      # and xcodebuild then reports "Unable to find a device" with nothing
+      # wrong in the code. Wait for the device, restarting the simulator
+      # service once, and fail with a plain message if it never appears.
+      - name: Wait for the simulator
+        env:
+          DEVICE: ${{ matrix.device }}
+        run: |
+          for attempt in $(seq 1 18); do
+            if xcrun simctl list devices available | grep -qF "    $DEVICE ("; then
+              echo "Found $DEVICE"
+              exit 0
+            fi
+            if [ "$attempt" -eq 6 ]; then
+              echo "Restarting the simulator service"
+              sudo killall -9 com.apple.CoreSimulator.CoreSimulatorService || true
+            fi
+            echo "Waiting for $DEVICE ($attempt/18)"
+            sleep 10
+          done
+          echo "::error::The runner has no '$DEVICE' simulator. This is the runner, not the tests: rerun the job."
+          xcrun simctl list devices available
+          exit 1
       - name: Build & test
         working-directory: App/Etude
         run: |
