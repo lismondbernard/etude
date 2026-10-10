@@ -6,7 +6,8 @@ import EtudeKit
 /// matches its golden fixture. The fixtures are the SWIFT writer's baseline
 /// (PLAN.md §5 — re-baselined from the prototype's; see Fixtures/README.md
 /// for provenance). An intentional output change means deleting the fixture,
-/// rerunning to re-record, and reviewing the new bytes in the commit.
+/// rerunning to re-record, and reviewing the new bytes in the commit. A
+/// mismatch prints what changed in the music, decoded with the SMF reader.
 @Suite("Emit corpus goldens")
 struct EmitCorpusGoldensTests {
     @Test("emits byte-stable output matching the golden fixture", .tags(.golden),
@@ -37,8 +38,14 @@ struct EmitCorpusGoldensTests {
             Issue.record("No golden existed for \(piece) — recorded one; rerun to verify")
             return
         }
-        #expect(Data(bytes) == (try Data(contentsOf: fixture)),
-                "\(piece) no longer matches its golden — if intended, delete and re-record")
+        // Compared outside #expect so the failure is the musical description
+        // below, not two byte arrays thousands of entries long.
+        let golden = [UInt8](try Data(contentsOf: fixture))
+        let matchesGolden = bytes == golden
+        #expect(matchesGolden, """
+            \(piece) no longer matches its golden — if intended, delete and re-record
+            \(goldenMismatch(golden: golden, output: bytes))
+            """)
     }
 
     // MARK: - Helpers
