@@ -12,10 +12,32 @@ func goldenMismatch(golden: [UInt8], output: [UInt8]) -> String {
     } catch {
         return "One of the files does not decode as MIDI (\(error)); compare the bytes by hand."
     }
-    let lines = zip(expected.tracks, actual.tracks).compactMap(trackMismatch)
+    var lines: [String] = []
+    if expected.beatsPerMinute != actual.beatsPerMinute {
+        lines.append("The tempo \(bpm(expected)) beats per minute became \(bpm(actual)).")
+    }
+    if voices(expected).count != voices(actual).count {
+        lines.append("The golden has \(tracks(expected)), the new output has \(tracks(actual)).")
+    }
+    lines += zip(expected.tracks, actual.tracks).compactMap(trackMismatch)
     guard lines.isEmpty else { return lines.joined(separator: "\n") }
     return "The events are identical; only the encoding differs "
         + "(the golden is \(golden.count) bytes, the new output \(output.count))."
+}
+
+private func bpm(_ file: SMFFile) -> String {
+    file.beatsPerMinute.map(String.init) ?? "unset"
+}
+
+/// The named tracks: the writer's first track carries only the tempo.
+private func voices(_ file: SMFFile) -> [SMFTrack] {
+    file.tracks.filter { !$0.name.isEmpty }
+}
+
+private func tracks(_ file: SMFFile) -> String {
+    let named = voices(file)
+    let names = named.map(\.name).joined(separator: ", ")
+    return "\(named.count) track\(named.count == 1 ? "" : "s") (\(names))"
 }
 
 private func trackMismatch(_ golden: SMFTrack, _ output: SMFTrack) -> String? {

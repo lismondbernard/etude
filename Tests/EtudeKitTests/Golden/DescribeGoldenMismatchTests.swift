@@ -69,6 +69,31 @@ struct DescribeGoldenMismatchTests {
             """)
     }
 
+    @Test("names a track the new output lost", .tags(.golden))
+    func lostTrack() {
+        let golden = bytes(voice("melody", pitches: [62]), voice("bass", pitches: [43]))
+        let output = bytes(voice("melody", pitches: [62]))
+
+        #expect(goldenMismatch(golden: golden, output: output) == """
+            The golden has 2 tracks (melody, bass), the new output has 1 track (melody).
+            """)
+    }
+
+    @Test("names a tempo change", .tags(.golden))
+    func changedTempo() {
+        let melody = voice("melody", pitches: [62, 64])
+        let golden = RunningStatusSMFWriter().bytes(for: score([melody], tempo: tempo(120)))
+        let output = RunningStatusSMFWriter().bytes(for: score([melody], tempo: tempo(96)))
+
+        #expect(goldenMismatch(golden: golden, output: output) == """
+            The tempo 120 beats per minute became 96.
+            """)
+    }
+
+    private func tempo(_ beatsPerMinute: Int) -> TempoMark {
+        TempoMark(label: nil, beatUnit: 4, beatsPerMinute: beatsPerMinute)
+    }
+
     private func bytes(_ voices: Voice...) -> [UInt8] {
         RunningStatusSMFWriter().bytes(for: score(voices))
     }
